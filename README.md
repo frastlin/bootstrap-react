@@ -26,6 +26,7 @@ Since I'm blind and I've been spending all of my time making the functionality f
 If you would like to add enhancements to this project, visually or functionally, or to address bugs I haven't discovered yet, please do so! I'll be happy to pull them in and reference you as a contributor to the project.
 
 Getting Started
+-----
 
 If you are unfamiliar with React, none of what this project looks like will make much sense, so please read the following resource before trying to figure it out.
 https://reactjs.org/tutorial/tutorial.html
