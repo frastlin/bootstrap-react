@@ -1,67 +1,81 @@
-/* WHATSOCK, 2016 */
-/* Specific styles for Tabs */
-
-ul.tabs {
+.tabs {
   margin: 0;
-  border-bottom: 3px solid #2e3135;
-}
-ul.tabs + div.content {
+  padding: 0; }
+.tabs + div.content {
   margin-bottom: 2rem;
-}
-
-ul.tabs.nonARIA li {
-  display: inline-block;
-  list-style-type: none;
-  margin: 0;
-}
-
-.tab {
-  display: inline-block;
-  margin: 0;
-}
-
-.tab a,
-.tab a:link,
-.tab a:visited,
-a.tab,
-a.tab:link,
-a.tab:visited,
-li.tab {
-  display: inline-block;
-  color: #fff;
-  background: #5d1f2c;
-  padding: 0.3em 0.5em 0.5em;
-  border-top-right-radius: 2px;
-  border-top-left-radius: 2px;
-  cursor: pointer;
-}
-
-.tab a:hover,
-.tab a:focus,
-a.tab:hover,
-a.tab:focus,
-.tab:hover,
-.tab:focus {
-  text-decoration: none;
-  color: #fff;
-  background-color: #2e3135;
-}
-
-.tab.active a,
-.tab.active a:link,
-.tab.active a:visited,
-a.tab.active,
-li.tab.active {
-  color: #fff;
-  background-color: #2e3135;
-}
-
-#tabInsertId {
-  text-align: center;
+  text-align: left;
   background: #fff;
   padding: 1rem;
-  border-bottom: 3px solid #2e3135;
+  border: 1px solid #85298D;}
+
+[role="tabpanel"] mark.icon-important {
+  max-width: 90%; }
+
+li[role="tab"] {
+  position: relative;
+  display: inline-block;
+  color: #000;
+  background-color: #fff;
+  border: 1px solid #85298D;
+  padding: 0.5rem 1.5rem;
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  line-height: 120%; }
+li[role="tab"]:hover::before,
+li[role="tab"] [role="tab"]:focus::before {
+    position: absolute;
+    bottom: 100%;
+    right: -1px;
+    left: -1px;
+    border-top: 6px solid #B67FBB;
+    content: ''; }
+li[role="tab"]:hover, li[role="tab"]:focus {
+    text-decoration: none;
+    color: #000; }
+li[role="tab"]::after {
+    position: absolute;
+    z-index: 3;
+    bottom: -1px;
+    right: 0;
+    left: 0;
+    height: .3em;
+    background: #fff;
+    content: ''; }
+li[role="tab"][aria-selected="true"] {
+    color: #000;
+    font-weight: 700; }
+li[role="tab"][aria-selected="true"]:focus::before {
+      border-top: 6px solid #85298D;
+      text-decoration: underline; }
+li[role="tab"][aria-selected="true"]::before {
+      position: absolute;
+      bottom: 100%;
+      right: -1px;
+      left: -1px;
+      content: '';
+      border-top: 6px solid #B67FBB; }
+li[role="tab"][aria-selected="true"]::after {
+      position: absolute;
+      z-index: 3;
+      bottom: -2px;
+      right: 0;
+      left: 0;
+      height: .3em;
+      background: #fff;
+      content: ''; }
+
+#tabInsertIdh {
+  text-align: left;
+  background: #fff;
+  padding: 1rem;
+  border: 1px solid #85298D; }
+/***************************
+Moved from global.css
+************************/
+  /*
+*:focus:not(*[role="tabpanel"]) {
+  color: #000;
+  background: #fc0;
 }
-#tabInsertId div {
-  padding: 0.5rem;
-}
+*/
