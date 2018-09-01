@@ -155,7 +155,7 @@ export function loadAccTabsModule() {
             onSpace: function(ev, tabNode, RTI) {
               if (!$A.data(tabNode, "disabled")) {
                 var dc = RTI.boundDC;
-                if (dc) dc.scrollIntoView = true;
+                if (dc) dc.scrollIntoView = false;
                 $A.trigger(tabNode, "activatetab");
               }
             }
