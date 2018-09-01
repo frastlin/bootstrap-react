@@ -152,6 +152,13 @@ export function loadAccTabsModule() {
                 }
               }
             },
+            onEnter: function(ev, tabNode, RTI) {
+              if (!$A.data(tabNode, "disabled")) {
+                var dc = RTI.boundDC;
+                if (dc) dc.scrollIntoView = false;
+                $A.trigger(tabNode, "activatetab");
+              }
+},
             onSpace: function(ev, tabNode, RTI) {
               if (!$A.data(tabNode, "disabled")) {
                 var dc = RTI.boundDC;
