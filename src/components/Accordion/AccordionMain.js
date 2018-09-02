@@ -44,9 +44,9 @@ class AccordionMain extends React.Component {
           </p>
         </div>
         <div className="intro tal viewport demo-block">
-          <dl id="accordionGroup">
-            <dt role="heading" aria-level={3} className="clearfix">
-              <button
+          <div className="accordionGroup">
+            <h3>
+            <button
                 className="accAccordion"
                 data-controls="Alternative"
                 data-insert="sect1"
@@ -54,12 +54,11 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion1id"
               >
-                <span className="icon" />
-                <span className="lbl">Alternative Rock</span>
-              </button>
-            </dt>
-            <dd id="sect1" />
-            <dt role="heading" aria-level={3} className="clearfix">
+            Alternative Rock
+            </button>
+            </h3>
+            <div id="sect1" />
+            <h3>
               <button
                 className="accAccordion"
                 data-controls="Classical"
@@ -67,12 +66,11 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion2id"
               >
-                <span className="icon" />
-                <span className="lbl">Classical Composers</span>
+              Classical Composers
               </button>
-            </dt>
-            <dd id="sect2" />
-            <dt role="heading" aria-level={3} className="clearfix">
+            </h3>
+            <div id="sect2" />
+            <h3>
               <button
                 className="accAccordion"
                 data-controls="Rock"
@@ -80,12 +78,11 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion3id"
               >
-                <span className="icon" />
-                <span className="lbl">Hard Rock</span>
+              Hard Rock
               </button>
-            </dt>
-            <dd id="sect3" />
-          </dl>
+            </h3>
+            <div id="sect3" />
+          </div>
         </div>
         <div className="intro tal keyboard">
           <p>The accordion controls are keyboard accessible:</p>
