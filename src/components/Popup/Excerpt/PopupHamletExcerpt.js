@@ -21,7 +21,7 @@ class PopupHamletExcerpt extends React.Component {
             className="popupClose"
           >
             <img
-              src="../../img/ic_close.svg"
+              src={require("../../img/ic_close.svg")}
               alt="Close Popup"
               title="Close Popup"
             />

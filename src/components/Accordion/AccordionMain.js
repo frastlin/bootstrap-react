@@ -46,7 +46,7 @@ class AccordionMain extends React.Component {
         <div className="intro tal viewport demo-block">
           <div className="accordionGroup">
             <h3>
-            <button
+              <button
                 className="accAccordion"
                 data-controls="Alternative"
                 data-insert="sect1"
@@ -54,8 +54,8 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion1id"
               >
-            Alternative Rock
-            </button>
+                Alternative Rock
+              </button>
             </h3>
             <div id="sect1" />
             <h3>
@@ -66,7 +66,7 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion2id"
               >
-              Classical Composers
+                Classical Composers
               </button>
             </h3>
             <div id="sect2" />
@@ -78,7 +78,7 @@ class AccordionMain extends React.Component {
                 data-accordiongroup="musicAccordion"
                 id="accordion3id"
               >
-              Hard Rock
+                Hard Rock
               </button>
             </h3>
             <div id="sect3" />

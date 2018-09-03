@@ -16,7 +16,11 @@ class Banner extends React.Component {
     return (
       <div id="ad-2">
         <div className="h2">
-          Lost<br />at<br />sea?
+          Lost
+          <br />
+          at
+          <br />
+          sea?
         </div>
         <ul id="boat">
           <li>
@@ -29,7 +33,9 @@ class Banner extends React.Component {
         </ul>
         <div id="content">
           <div className="h3">
-            Relax.<br />We've got your rudder.
+            Relax.
+            <br />
+            We've got your rudder.
           </div>
           <a role="button" href="#" onClick={ev => this.handleActivate(ev)}>
             Guide me!

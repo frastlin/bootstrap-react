@@ -62,7 +62,7 @@ class CalendarMain extends React.Component {
               data-controls="date"
             >
               <img
-                src="../../img/calendar/calendar-button.svg"
+                src={require("../../img/calendar/calendar-button.svg")}
                 alt="Birth Date Calendar Picker"
                 title="Birth Date Calendar Picker"
               />
@@ -81,7 +81,7 @@ class CalendarMain extends React.Component {
               data-controls="party"
             >
               <img
-                src="../../img/calendar/calendar-button.svg"
+                src={require("../../img/calendar/calendar-button.svg")}
                 alt="Party Date Calendar Picker"
                 title="Party Date Calendar Picker"
               />
