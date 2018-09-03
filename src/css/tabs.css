@@ -2,80 +2,88 @@
   margin: 0;
   padding: 0; }
 .tabs + div.content {
-  margin-bottom: 2rem;
-  text-align: left;
   background: #fff;
+  border: 1px solid #85298D;
+  margin-bottom: 2rem;
   padding: 1rem;
-  border: 1px solid #85298D;}
-
+  text-align: left;
+}
 [role="tabpanel"] mark.icon-important {
-  max-width: 90%; }
+  max-width: 90%;
+}
 
 li[role="tab"] {
-  position: relative;
-  display: inline-block;
-  color: #000;
   background-color: #fff;
   border: 1px solid #85298D;
-  padding: 0.5rem 1.5rem;
-  margin: 0;
+  color: #262626;
   cursor: pointer;
+  display: inline-block;
+  line-height: 1.5;
+  margin: 0;
   outline: none;
-  line-height: 120%; }
+  position: relative;
+  padding: 0.5rem 1.5rem;
+}
 li[role="tab"]:hover::before,
 li[role="tab"] [role="tab"]:focus::before {
-    position: absolute;
-    bottom: 100%;
-    right: -1px;
-    left: -1px;
-    border-top: 6px solid #B67FBB;
-    content: ''; }
-li[role="tab"]:hover, li[role="tab"]:focus {
-    text-decoration: none;
-    color: #000; }
-li[role="tab"]::after {
-    position: absolute;
-    z-index: 3;
-    bottom: -1px;
-    right: 0;
-    left: 0;
-    height: .3em;
-    background: #fff;
-    content: ''; }
-li[role="tab"][aria-selected="true"] {
-    color: #000;
-    font-weight: 700; }
-li[role="tab"][aria-selected="true"]:focus::before {
-      border-top: 6px solid #85298D;
-      text-decoration: underline; }
-li[role="tab"][aria-selected="true"]::before {
-      position: absolute;
-      bottom: 100%;
-      right: -1px;
-      left: -1px;
-      content: '';
-      border-top: 6px solid #B67FBB; }
-li[role="tab"][aria-selected="true"]::after {
-      position: absolute;
-      z-index: 3;
-      bottom: -2px;
-      right: 0;
-      left: 0;
-      height: .3em;
-      background: #fff;
-      content: ''; }
-
-#tabInsertIdh {
-  text-align: left;
-  background: #fff;
-  padding: 1rem;
-  border: 1px solid #85298D; }
-/***************************
-Moved from global.css
-************************/
-  /*
-*:focus:not(*[role="tabpanel"]) {
-  color: #000;
-  background: #fc0;
+  border-top: 6px solid #C294C7;
+  bottom: 100%;
+  content: '';
+  left: -1px;
+  position: absolute;
+  right: -1px;
 }
-*/
+li[role="tab"]:hover, li[role="tab"]:focus {
+  color: #000;
+  text-decoration: none;
+}
+li[role="tab"]::after {
+  background: #fff;
+  bottom: -1px;
+  content: '';
+  height: .3em;
+  left: 0;
+  position: absolute;
+  right: 0;
+  z-index: 3;
+}
+li[role="tab"][aria-selected="true"] {
+  color: #000;
+  font-weight: 700;
+}
+li[role="tab"][aria-selected="true"]::before {
+  border-top: 6px solid #85298D;
+  bottom: 100%;
+  content: '';
+  left: -1px;
+  position: absolute;
+  right: -1px;
+}
+li[role="tab"][aria-selected="true"]::after {
+  background: #fff;
+  bottom: -2px;
+  content: '';
+  height: .3em;
+  left: 0;
+  position: absolute;
+  right: 0;
+  z-index: 3;
+}
+li[role="tab"][tabindex="0"]:focus::before {
+  border-top: 6px solid #B67FBB;
+  text-decoration: underline; 
+}
+li[role="tab"][tabindex="0"]::before {
+  border-top: 6px solid #B67FBB;
+  bottom: 100%;
+  content: '';
+  left: -1px;
+  position: absolute;
+  right: -1px;
+}
+#tabInsertIdh {
+  background: #fff;
+  border: 1px solid #85298D; 
+  padding: 1rem;
+  text-align: left;
+}
