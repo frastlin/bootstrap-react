@@ -147,7 +147,7 @@ export function loadAccTabsModule() {
               if (!$A.data(tabNode, "disabled")) {
                 if (!abortForArrows) {
                   var dc = RTI.boundDC;
-                  if (dc) dc.scrollIntoView = true;
+                  if (dc && $A.isTouch()) dc.scrollIntoView = true;
                   $A.trigger(tabNode, "activatetab");
                 }
               }
