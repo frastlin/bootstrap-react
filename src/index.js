@@ -4,7 +4,10 @@ import React from "react";
 import $A from "./AccDC/Core/API";
 import "./VisualARIA/Load";
 
+import "./css/global.css";
 import MainTabList from "./components/MainTabList";
+
+import IntroContent from "./components/Intro/IntroMain";
 
 // Use $A.insert, $A.insertWithin, $A.before, $A.after, $A.prepend, $A.prependTo, $A.append, or $A.appendTo to render standard markup or DOM nodes.
 // To remove a DOM node, use $A.remove. E.G $A(DOM_Node).remove();
@@ -17,6 +20,7 @@ let myTabListComponent = $A("#BootstrapHomeTabList")
   .return();
 // To remove a React component, use $A.unmount
 // $A(myTabListComponent).unmount();
+$A("#pgContent").mount(<IntroContent />);
 
 $A(".topLink a").on("click", function(ev) {
   $A("h1").focus();
