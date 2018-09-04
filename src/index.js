@@ -4,7 +4,6 @@ import React from "react";
 import $A from "./AccDC/Core/API";
 import "./VisualARIA/Load";
 
-import "./css/global.css";
 import MainTabList from "./components/MainTabList";
 
 // Use $A.insert, $A.insertWithin, $A.before, $A.after, $A.prepend, $A.prependTo, $A.append, or $A.appendTo to render standard markup or DOM nodes.
