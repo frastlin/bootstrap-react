@@ -3,9 +3,6 @@ import React from "react";
 let $A = window.AccDC;
 
 class Banner extends React.Component {
-  constructor(props) {
-    super(props);
-  }
   handleActivate(ev) {
     alert("Do something...");
     $A(this).unmount();
@@ -37,7 +34,11 @@ class Banner extends React.Component {
             <br />
             We've got your rudder.
           </div>
-          <a role="button" href="#" onClick={ev => this.handleActivate(ev)}>
+          <a
+            role="button"
+            href="#activate"
+            onClick={ev => this.handleActivate(ev)}
+          >
             Guide me!
           </a>
         </div>

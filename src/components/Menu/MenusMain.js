@@ -65,7 +65,6 @@ class MenusMain extends React.Component {
               id="menuBtn1"
               aria-haspopup="true"
               className="accMenu menu2"
-              aria-haspopup="true"
               data-controls="OptionsMenuBar"
               data-containerclassname="foMenu"
             >
@@ -79,7 +78,6 @@ class MenusMain extends React.Component {
               id="menuBtn2"
               aria-haspopup="true"
               className="accMenu menu"
-              aria-haspopup="true"
               data-controls="OptionsMenu"
               data-containerclassname="menu"
             >

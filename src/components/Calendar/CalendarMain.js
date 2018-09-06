@@ -55,7 +55,7 @@ class CalendarMain extends React.Component {
             <a
               role="button"
               aria-describedby="date"
-              href="#"
+              href="#date"
               id="dateLnk"
               className="accCalendar datePicker"
               data-widget="calendar"
@@ -74,7 +74,7 @@ class CalendarMain extends React.Component {
             <a
               role="button"
               aria-describedby="party"
-              href="#"
+              href="#date"
               id="partyLnk"
               className="accCalendar datePicker"
               data-widget="calendar"

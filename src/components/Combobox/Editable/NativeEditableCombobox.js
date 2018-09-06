@@ -73,7 +73,7 @@ Example: this.myCombobox.update();
   }
   scrollIntoViewOverride(optionNode, cbInstance) {
     // cbInstance.listboxNode is the parent role="listbox" container element
-    if (cbInstance.listboxNode != cbInstance.listboxNodeLast) {
+    if (cbInstance.listboxNode !== cbInstance.listboxNodeLast) {
       // Only create a new myScroller instance when a new listbox is rendered.
       cbInstance.listboxNodeLast = cbInstance.listboxNode;
       cbInstance.myScroller = zenscroll.createScroller(
@@ -92,6 +92,7 @@ Example: this.myCombobox.update();
         <label htmlFor="stt">State or province:</label>
         <input
           role="combobox"
+          aria-expanded="false"
           type="text"
           name="state-input-value"
           required

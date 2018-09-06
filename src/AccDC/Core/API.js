@@ -1,5 +1,5 @@
 /*
-AccDC 4X - 4.2018.0 BETA + React
+AccDC 4X - 4.2018.0.1 BETA + React
 Copyright 2010-2018 Bryan Garaventa (WhatSock.com)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
 */
@@ -25,8 +25,8 @@ export function $AccDC() {
   return (
     window.AccDC ||
     (function() {
-      var accDCVersion = "4.2018.0",
-        $A = (window.AccDC = function(dc, dcA, dcI, onReady, disableAsync) {
+      var accDCVersion = "4.2018.0.1",
+        $A = function(dc, dcA, dcI, onReady, disableAsync) {
           if (!arguments.length && this === $A) {
             return $A;
           } else if (typeof dc === "function" && arguments.length === 1) {
@@ -95,7 +95,7 @@ export function $AccDC() {
               fn();
             });
           } else return fn();
-        }),
+        },
         nowI = 0,
         now = function() {
           return new Date().getTime() + nowI++;
@@ -135,7 +135,7 @@ export function $AccDC() {
           --i;
         }
         for (; i < length; i++) {
-          if ((options = arguments[i]) != null) {
+          if ((options = arguments[i]) !== null) {
             for (name in options) {
               src = target[name];
               copy = options[name];
@@ -454,7 +454,7 @@ export function $AccDC() {
           if (!s || typeof s !== "string") {
             return false;
           }
-          let r = String.announce.iterate(s, /<|>/g) > 1;
+          let r = stringAnnounce.iterate(s, /<|>/g) > 1;
           return r;
         },
 
@@ -1380,7 +1380,7 @@ error: function(error, promise){}
             var pc = -1,
               cn = r.parent.children;
             for (var i = 0; i < cn.length; i++) {
-              if (cn[i].id == id) pc = i;
+              if (cn[i].id === id) pc = i;
             }
             if (pc >= 0) r.parent.children.splice(pc, 1);
           }
@@ -1765,7 +1765,7 @@ error: function(error, promise){}
             if (!n) return false;
             var list = ["top", "left", "bottom", "right", "width", "height"];
             for (var l = 0; l < list.length; l++) {
-              if (list[l].substr(list[l].length - n.length) == n) return true;
+              if (list[l].substr(list[l].length - n.length) === n) return true;
             }
             return false;
           };
@@ -1921,7 +1921,7 @@ error: function(error, promise){}
 
         _calcPosition: function(dc, objArg, posVal) {
           var obj = objArg || dc.posAnchor;
-          if (obj && typeof obj == "string") obj = $A.query(obj)[0];
+          if (obj && typeof obj === "string") obj = $A.query(obj)[0];
           else if (!obj) obj = dc.triggerObj;
           if (!obj) return;
           var autoPosition = posVal || dc.autoPosition,
@@ -1932,42 +1932,42 @@ error: function(error, promise){}
             },
             oPos = $A._offset(obj),
             position = $A.css(dc.outerNode, "position");
-          if (position == "absolute" && $A.css(obj, "position") != "fixed")
+          if (position === "absolute" && $A.css(obj, "position") !== "fixed")
             oPos = $A._offset(obj, true);
-          if (autoPosition == 1) {
+          if (autoPosition === 1) {
             pos.left = oPos.left;
             pos.top = oPos.top - aPos.height;
-          } else if (autoPosition == 2) {
+          } else if (autoPosition === 2) {
             pos.left = oPos.right;
             pos.top = oPos.top - aPos.height;
-          } else if (autoPosition == 3) {
+          } else if (autoPosition === 3) {
             pos.left = oPos.right;
             pos.top = oPos.top;
-          } else if (autoPosition == 4) {
+          } else if (autoPosition === 4) {
             pos.left = oPos.right;
             pos.top = oPos.bottom;
-          } else if (autoPosition == 5) {
+          } else if (autoPosition === 5) {
             pos.left = oPos.left;
             pos.top = oPos.bottom;
-          } else if (autoPosition == 6) {
+          } else if (autoPosition === 6) {
             pos.left = oPos.left - aPos.width;
             pos.top = oPos.bottom;
-          } else if (autoPosition == 7) {
+          } else if (autoPosition === 7) {
             pos.left = oPos.left - aPos.width;
             pos.top = oPos.top;
-          } else if (autoPosition == 8) {
+          } else if (autoPosition === 8) {
             pos.left = oPos.left - aPos.width;
             pos.top = oPos.top - aPos.height;
-          } else if (autoPosition == 9) {
+          } else if (autoPosition === 9) {
             pos.left = oPos.left;
             pos.top = oPos.top;
-          } else if (autoPosition == 10) {
+          } else if (autoPosition === 10) {
             pos.left = oPos.right - aPos.width;
             pos.top = oPos.top - aPos.height;
-          } else if (autoPosition == 11) {
+          } else if (autoPosition === 11) {
             pos.left = oPos.right - aPos.width;
             pos.top = oPos.top;
-          } else if (autoPosition == 12) {
+          } else if (autoPosition === 12) {
             pos.left = oPos.right - aPos.width;
             pos.top = oPos.bottom;
           }
@@ -2021,9 +2021,9 @@ error: function(error, promise){}
           if (!c || c.nodeType !== 1) return c;
           var r = {},
             position = $A.css(c, "position");
-          if (forceAbsolute || position == "absolute")
+          if (forceAbsolute || position === "absolute")
             r = $A._getAbsolutePos(c);
-          else if (forceRelative || position == "relative") {
+          else if (forceRelative || position === "relative") {
             r.top = c.offsetTop;
             r.left = c.offsetLeft;
             r.height = $A.elementHeight(c);
@@ -2073,12 +2073,12 @@ error: function(error, promise){}
             v = "undefined",
             dv = document.defaultView;
           if (dv && dv.getComputedStyle) {
-            if (e == document) e = document.body;
+            if (e === document) e = document.body;
             s = dv.getComputedStyle(e, "");
             if (s) v = s.getPropertyValue(p);
           } else if (e.currentStyle) v = e.currentStyle[$A._camelize(p)];
           else return null;
-          return i ? parseInt(v) || 0 : v;
+          return i ? parseInt(v, 10) || 0 : v;
         },
 
         _num: function() {
@@ -2117,7 +2117,7 @@ error: function(error, promise){}
           css = $A._def(e.style);
           if (css && $A._def(e.offsetHeight) && $A._str(e.style.height)) {
             if (h >= 0) {
-              if (document.compatMode == "CSS1Compat") {
+              if (document.compatMode === "CSS1Compat") {
                 pt = $A._getComputedStyle(e, "padding-top", 1);
                 if (pt !== null) {
                   pb = $A._getComputedStyle(e, "padding-bottom", 1);
@@ -2154,7 +2154,7 @@ error: function(error, promise){}
           css = $A._def(e.style);
           if (css && $A._def(e.offsetWidth) && $A._str(e.style.width)) {
             if (w >= 0) {
-              if (document.compatMode == "CSS1Compat") {
+              if (document.compatMode === "CSS1Compat") {
                 pl = $A._getComputedStyle(e, "padding-left", 1);
                 if (pl !== null) {
                   pr = $A._getComputedStyle(e, "padding-right", 1);
@@ -2182,7 +2182,7 @@ error: function(error, promise){}
           if (css && $A._str(e.style.top)) {
             if ($A._num(iY)) e.style.top = iY + "px";
             else {
-              iY = parseInt(e.style.top);
+              iY = parseInt(e.style.top, 10);
               if (isNaN(iY)) iY = $A._getComputedStyle(e, "top", 1);
               if (isNaN(iY)) iY = 0;
             }
@@ -2198,7 +2198,7 @@ error: function(error, promise){}
           if (css && $A._str(e.style.left)) {
             if ($A._num(iX)) e.style.left = iX + "px";
             else {
-              iX = parseInt(e.style.left);
+              iX = parseInt(e.style.left, 10);
               if (isNaN(iX)) iX = $A._getComputedStyle(e, "left", 1);
               if (isNaN(iX)) iX = 0;
             }
@@ -2497,8 +2497,8 @@ verticalStop: true or false
                   keydown: function(ev, dc) {
                     changePressed(ev);
                     var k = ev.which || ev.keyCode,
-                      oMap = map.get(o);
-
+                      oMap = map.get(o),
+                      child = null;
                     that.boundDC = dc;
 
                     // 37 left, 38 up, 39 right, 40 down, 35 end, 36 home
@@ -2513,10 +2513,10 @@ verticalStop: true or false
                         pass = false;
 
                       if (
-                        (k == 39 && that.orientation === 2) ||
-                        (k == 40 && that.orientation === 1)
+                        (k === 39 && that.orientation === 2) ||
+                        (k === 40 && that.orientation === 1)
                       ) {
-                        var child = that.children.get(o);
+                        child = that.children.get(o);
                         if (
                           that.handleOpen &&
                           typeof that.handleOpen === "function"
@@ -2524,8 +2524,8 @@ verticalStop: true or false
                           that.handleOpen.apply(o, [ev, o, that, child, true]);
                         pass = true;
                       } else if (
-                        (k == 37 && that.orientation === 2) ||
-                        (k == 38 && that.orientation === 1)
+                        (k === 37 && that.orientation === 2) ||
+                        (k === 38 && that.orientation === 1)
                       ) {
                         if (
                           that.handleClose &&
@@ -2534,15 +2534,15 @@ verticalStop: true or false
                           that.handleClose.apply(o, [ev, o, that, that.parent]);
                         pass = true;
                       } else if (
-                        (k == 37 &&
+                        (k === 37 &&
                           (that.orientation === 0 || that.orientation === 1)) ||
-                        (k == 38 &&
+                        (k === 38 &&
                           (that.orientation === 0 || that.orientation === 2))
                       ) {
                         if (that.breakPoint) {
                           if (
                             that.breakPoint.horizontal &&
-                            (k == 37 &&
+                            (k === 37 &&
                               (that.orientation === 0 ||
                                 that.orientation === 1))
                           ) {
@@ -2562,7 +2562,7 @@ verticalStop: true or false
                               that.handleBounds.apply(o, [ev, o, that, k]);
                           } else if (
                             that.breakPoint.vertical &&
-                            (k == 38 &&
+                            (k === 38 &&
                               (that.orientation === 0 ||
                                 that.orientation === 2))
                           ) {
@@ -2583,15 +2583,15 @@ verticalStop: true or false
                                 : x
                               : that.index - 1;
                       } else if (
-                        (k == 39 &&
+                        (k === 39 &&
                           (that.orientation === 0 || that.orientation === 1)) ||
-                        (k == 40 &&
+                        (k === 40 &&
                           (that.orientation === 0 || that.orientation === 2))
                       ) {
                         if (that.breakPoint) {
                           if (
                             that.breakPoint.horizontal &&
-                            (k == 39 &&
+                            (k === 39 &&
                               (that.orientation === 0 ||
                                 that.orientation === 1))
                           ) {
@@ -2611,7 +2611,7 @@ verticalStop: true or false
                               that.handleBounds.apply(o, [ev, o, that, k]);
                           } else if (
                             that.breakPoint.vertical &&
-                            (k == 40 &&
+                            (k === 40 &&
                               (that.orientation === 0 ||
                                 that.orientation === 2))
                           ) {
@@ -2631,7 +2631,7 @@ verticalStop: true or false
                                 ? 0
                                 : x
                               : that.index + 1;
-                      } else if (k == 35) {
+                      } else if (k === 35) {
                         if (
                           that.breakPoint &&
                           that.breakPoint.horizontal > 0 &&
@@ -2640,7 +2640,7 @@ verticalStop: true or false
                           that.index =
                             map[grid[oMap.y][that.breakPoint.horizontal]].i;
                         else that.index = that.nodes.length - 1;
-                      } else if (k == 36) {
+                      } else if (k === 36) {
                         if (
                           that.breakPoint &&
                           that.breakPoint.horizontal > 0 &&
@@ -2782,9 +2782,9 @@ verticalStop: true or false
                           }
                         }
                       }
-                    } else if ((k == 13 || k == 32) && !pressed.alt) {
-                      if (k == 13) {
-                        var child = that.children.get(o);
+                    } else if ((k === 13 || k === 32) && !pressed.alt) {
+                      if (k === 13) {
+                        child = that.children.get(o);
 
                         if (
                           that.handleEnter &&
@@ -2799,7 +2799,7 @@ verticalStop: true or false
 
                         ev.stopPropagation();
                         ev.preventDefault();
-                      } else if (k == 32) {
+                      } else if (k === 32) {
                         if (!pressed.ctrl) {
                           if (
                             that.handleSpace &&
@@ -2963,7 +2963,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   // Note: the inParent checker needs to be present to allow for embedded roles matching list3 when the referenced parent is referenced using aria-labelledby, aria-describedby, or aria-owns.
                   return !(
                     (inParent(node, ownedBy.top) &&
-                      node.nodeName.toLowerCase() != "select") ||
+                      node.nodeName.toLowerCase() !== "select") ||
                     inList(refNode, list1)
                   );
                 }
@@ -3086,6 +3086,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
             fullResult = walkDOM(
               refNode,
               function(node) {
+                var i = 0;
+                var element = null;
+                var ids = [];
+                var parts = [];
                 var result = {
                   name: "",
                   title: "",
@@ -3172,11 +3176,11 @@ https://github.com/whatsock/w3c-alternative-text-computation
                     isRangeWidgetRole ||
                     isEditWidgetRole ||
                     isSelectWidgetRole ||
-                    nRole == "combobox";
+                    nRole === "combobox";
                   var isWidgetRole =
                     (isSimulatedFormField ||
                       otherWidgetRoles.indexOf(nRole) !== -1) &&
-                    nRole != "link";
+                    nRole !== "link";
                   result.isWidget = isNativeFormField || isWidgetRole;
 
                   var hasName = false;
@@ -3195,10 +3199,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   if (!stop && node === refNode) {
                     // Check for non-empty value of aria-labelledby if current node equals reference node, follow each ID ref, then stop and process no deeper.
                     if (aLabelledby) {
-                      var ids = aLabelledby.split(/\s+/);
-                      var parts = [];
-                      for (var i = 0; i < ids.length; i++) {
-                        var element = document.getElementById(ids[i]);
+                      ids = aLabelledby.split(/\s+/);
+                      parts = [];
+                      for (i = 0; i < ids.length; i++) {
+                        element = document.getElementById(ids[i]);
                         // Also prevent the current form field from having its value included in the naming computation if nested as a child of label
                         parts.push(
                           walk(
@@ -3228,9 +3232,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
                     if (aDescribedby) {
                       var desc = "";
                       ids = aDescribedby.split(/\s+/);
-                      var parts = [];
-                      for (var i = 0; i < ids.length; i++) {
-                        var element = document.getElementById(ids[i]);
+                      parts = [];
+                      for (i = 0; i < ids.length; i++) {
+                        element = document.getElementById(ids[i]);
                         // Also prevent the current form field from having its value included in the naming computation if nested as a child of label
                         parts.push(
                           walk(element, true, false, [node], false, {
@@ -3263,7 +3267,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                         name = getObjectValue(nRole, node, true);
                       } else if (
                         isEditWidgetRole ||
-                        (nRole == "combobox" && isNativeFormField)
+                        (nRole === "combobox" && isNativeFormField)
                       ) {
                         // For simulated edit widgets, append text from content if applicable, or node.value if applicable.
                         name = getObjectValue(nRole, node, false, true);
@@ -3288,7 +3292,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                       } else if (
                         isNativeFormField &&
                         nTag === "select" &&
-                        (!isWidgetRole || nRole == "combobox")
+                        (!isWidgetRole || nRole === "combobox")
                       ) {
                         // For native select fields, get text from content for all options with selected attribute separated by a space when multiple, but don't process if another widget role is present unless it matches role="combobox".
                         // Reference: https://github.com/WhatSock/w3c-alternative-text-computation/issues/7
@@ -3339,7 +3343,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                         : false;
                     var implicitI = 0;
                     var explicitI = 0;
-                    for (var i = 0; i < labels.length; i++) {
+                    for (i = 0; i < labels.length; i++) {
                       if (labels[i] === implicitLabel) {
                         implicitI = i;
                       } else if (labels[i] === explicitLabel) {
@@ -3420,9 +3424,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   if (
                     !hasName &&
                     !rolePresentation &&
-                    (nTag == "img" ||
-                      (nTag == "input" &&
-                        node.getAttribute("type") == "image")) &&
+                    (nTag === "img" ||
+                      (nTag === "input" &&
+                        node.getAttribute("type") === "image")) &&
                     nAlt
                   ) {
                     // Check for blank value, since whitespace chars alone are not valid as a name
@@ -3444,11 +3448,11 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
                   // Check for non-empty value of aria-owns, follow each ID ref, then process with same naming computation.
                   // Also abort aria-owns processing if contained on an element that does not support child elements.
-                  if (aOwns && !isNativeFormField && nTag != "img") {
-                    var ids = aOwns.split(/\s+/);
-                    var parts = [];
-                    for (var i = 0; i < ids.length; i++) {
-                      var element = document.getElementById(ids[i]);
+                  if (aOwns && !isNativeFormField && nTag !== "img") {
+                    ids = aOwns.split(/\s+/);
+                    parts = [];
+                    for (i = 0; i < ids.length; i++) {
+                      element = document.getElementById(ids[i]);
                       // Abort processing if the referenced node has already been traversed
                       if (element && owns.indexOf(ids[i]) === -1) {
                         owns.push(ids[i]);
@@ -3742,7 +3746,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
           var isHidden = function(node, refNode) {
             var hidden = function(node) {
-              if (node.nodeType !== 1 || node == refNode) {
+              if (node.nodeType !== 1 || node === refNode) {
                 return false;
               }
               if (node.getAttribute("aria-hidden") === "true") {
@@ -3764,7 +3768,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
           };
 
           var isParentHidden = function(node, refNode, skipOwned, skipCurrent) {
-            var trackNodes = [];
             while (node && node !== refNode) {
               if (
                 !skipCurrent &&
@@ -3911,13 +3914,13 @@ https://github.com/whatsock/w3c-alternative-text-computation
               val = getText(node) || "";
             } else if (isSelect && !isNative) {
               var childRoles = [];
-              if (role == "grid" || role == "treegrid") {
+              if (role === "grid" || role === "treegrid") {
                 childRoles = ["gridcell", "rowheader", "columnheader"];
-              } else if (role == "listbox") {
+              } else if (role === "listbox") {
                 childRoles = ["option"];
-              } else if (role == "tablist") {
+              } else if (role === "tablist") {
                 childRoles = ["tab"];
-              } else if (role == "tree") {
+              } else if (role === "tree") {
                 childRoles = ["treeitem"];
               }
               val = joinSelectedParts(
@@ -3955,7 +3958,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             if (!nOA || !nOA.length) {
               return "";
             }
-            var parts = [];
+            let parts = [];
             for (var i = 0; i < nOA.length; i++) {
               var role = getRole(nOA[i]);
               var isValidChildRole =
@@ -3981,7 +3984,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             styleObj["content"] = document.defaultView
               .getComputedStyle(node, position)
               .getPropertyValue("content")
-              .replace(/^\"|\\|\"$/g, "");
+              .replace(/^"|\\|"$/g, "");
             return styleObj;
           };
 
@@ -3995,9 +3998,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
               return "";
             }
             if (isBlockLevelElement({}, styles)) {
-              if (position == ":before") {
+              if (position === ":before") {
                 text += " ";
-              } else if (position == ":after") {
+              } else if (position === ":after") {
                 text = " " + text;
               }
             }
@@ -4007,7 +4010,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
           var getCSSText = function(node, refNode) {
             if (
               (node && node.nodeType !== 1) ||
-              node == refNode ||
+              node === refNode ||
               ["input", "select", "textarea", "img", "iframe"].indexOf(
                 node.nodeName.toLowerCase()
               ) !== -1
@@ -4030,7 +4033,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
               if (
                 node &&
                 node.nodeName &&
-                node.nodeName.toLowerCase() == nTag
+                node.nodeName.toLowerCase() === nTag
               ) {
                 return node;
               }
@@ -4099,7 +4102,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
           nodes = [];
           owns = [];
 
-          if (fnc && typeof fnc == "function") {
+          if (fnc && typeof fnc === "function") {
             return fnc.apply(node, [node, props]);
           } else {
             return props;
@@ -4130,7 +4133,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
           if (!str) return this.isClonedAccDCObject ? this : str;
           var s = $A._checkStoredNodes(str);
           if ($A.isArray(s)) s = s[0];
-          String.prototype.announce.apply(s, [s, noRepeat, aggr]);
+          announceString.apply(s, [s, noRepeat, aggr]);
           if (this.isClonedAccDCObject) {
             this.currentObject = str;
             return this;
@@ -4156,7 +4159,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             node = this.currentObject;
           }
           var nodeName = node.nodeName.toLowerCase(),
-            tabI = parseInt(node.getAttribute("tabindex"));
+            tabI = parseInt(node.getAttribute("tabindex"), 10);
           if (
             (usingFocus && typeof tabI === "number") ||
             (!usingFocus && typeof tabI === "number" && tabI >= 0)
@@ -4239,8 +4242,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
               let tag = $A.createEl(config.tag);
 
               let promise = new Promise((resolve, reject) => {
-                let resolved = false,
-                  errored = false;
                 tag.async = config.async || false; // Default: Load in order
                 const cbName = `loaderCB${counter++}${Date.now()}`;
                 let cb;
@@ -4278,7 +4279,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
                 // Pick off callback, if there is one
                 if (src.match(/callback=CALLBACK_NAME/)) {
-                  src = src.replace(/(callback=)[^\&]+/, `$1${cbName}`);
+                  src = src.replace(/(callback=)[^&]+/, `$1${cbName}`);
                   cb = window[cbName] = tag.onload;
                 } else {
                   tag.addEventListener("load", tag.onload);
@@ -4325,7 +4326,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
         };
       })(window);
 
-      String.prototype.announce = function announce(strm, noRep, aggr, loop) {
+      var announceString = function(strm, noRep, aggr, loop) {
         var str = strm;
         if (!arguments.length || typeof str === "boolean") {
           loop = aggr;
@@ -4340,69 +4341,63 @@ https://github.com/whatsock/w3c-alternative-text-computation
           str = $A.getText(str);
         }
         if (str && typeof str === "string") {
-          if (String.announce.loaded) {
+          if (stringAnnounce.loaded) {
             if (
-              !String.announce.liveRendered &&
+              !stringAnnounce.liveRendered &&
               !aggr &&
-              String.announce.placeHolder
+              stringAnnounce.placeHolder
             ) {
-              String.announce.liveRendered = true;
-              document.body.appendChild(String.announce.placeHolder);
+              stringAnnounce.liveRendered = true;
+              document.body.appendChild(stringAnnounce.placeHolder);
             }
             if (
-              !String.announce.alertRendered &&
+              !stringAnnounce.alertRendered &&
               aggr &&
-              String.announce.placeHolder2
+              stringAnnounce.placeHolder2
             ) {
-              String.announce.alertRendered = true;
-              document.body.appendChild(String.announce.placeHolder2);
+              stringAnnounce.alertRendered = true;
+              document.body.appendChild(stringAnnounce.placeHolder2);
             }
           }
-          if (!loop && $A.inArray(str, String.announce.alertMsgs) === -1)
-            String.announce.alertMsgs.push(str);
-          if (String.announce.alertMsgs.length == 1 || loop) {
+          if (!loop && $A.inArray(str, stringAnnounce.alertMsgs) === -1)
+            stringAnnounce.alertMsgs.push(str);
+          if (stringAnnounce.alertMsgs.length === 1 || loop) {
             var timeLength =
-              String.announce.baseDelay +
-              String.announce.iterate(
-                String.announce.alertMsgs[0],
-                /\s|\,|\.|\:|\;|\!|\(|\)|\/|\?|\@|\#|\$|\%|\^|\&|\*|\\|\-|\_|\+|\=/g
+              stringAnnounce.baseDelay +
+              stringAnnounce.iterate(
+                stringAnnounce.alertMsgs[0],
+                /\s|,|\.|:|;|!|\(|\)|\/|\?|@|#|\$|%|\^|&|\*|\\|-|_|\+|=/g
               ) *
-                String.announce.charMultiplier;
+                stringAnnounce.charMultiplier;
             if (
-              !(
-                noRep && String.announce.lastMsg == String.announce.alertMsgs[0]
-              )
+              !(noRep && stringAnnounce.lastMsg === stringAnnounce.alertMsgs[0])
             ) {
-              String.announce.lastMsg = String.announce.alertMsgs[0];
+              stringAnnounce.lastMsg = stringAnnounce.alertMsgs[0];
               if (aggr)
                 $A.insertMarkup(
-                  String.announce.alertMsgs[0],
-                  String.announce.placeHolder2
+                  stringAnnounce.alertMsgs[0],
+                  stringAnnounce.placeHolder2
                 );
               else
                 $A.insertMarkup(
-                  String.announce.alertMsgs[0],
-                  String.announce.placeHolder
+                  stringAnnounce.alertMsgs[0],
+                  stringAnnounce.placeHolder
                 );
             }
-            String.announce.alertTO = setTimeout(function() {
-              $A.insertMarkup("", String.announce.placeHolder);
-              $A.insertMarkup("", String.announce.placeHolder2);
-              String.announce.alertMsgs.shift();
-              if (String.announce.alertMsgs.length >= 1)
-                String.prototype.announce(
-                  String.announce.alertMsgs[0],
-                  noRep,
-                  aggr,
-                  true
-                );
+            stringAnnounce.alertTO = setTimeout(function() {
+              $A.insertMarkup("", stringAnnounce.placeHolder);
+              $A.insertMarkup("", stringAnnounce.placeHolder2);
+              stringAnnounce.alertMsgs.shift();
+              if (stringAnnounce.alertMsgs.length >= 1)
+                announceString(stringAnnounce.alertMsgs[0], noRep, aggr, true);
             }, timeLength);
           }
         }
         return strm;
       };
+      String.prototype.announce = announceString;
 
-      String.announce = {
+      var stringAnnounce = {
         alertMsgs: [],
         clear: function() {
           if (this.alertTO) clearTimeout(this.alertTO);
@@ -4425,15 +4420,15 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
       window.addEventListener("load", function() {
         $A.documentLoaded = true;
-        if (!String.announce.placeHolder) {
-          String.announce.placeHolder = $A.createEl(
+        if (!stringAnnounce.placeHolder) {
+          stringAnnounce.placeHolder = $A.createEl(
             "div",
             {
               "aria-live": "polite"
             },
             $A.sraCSS
           );
-          String.announce.placeHolder2 = $A.createEl(
+          stringAnnounce.placeHolder2 = $A.createEl(
             "div",
             {
               role: "alert"
@@ -4441,12 +4436,13 @@ https://github.com/whatsock/w3c-alternative-text-computation
             $A.sraCSS
           );
         }
-        String.announce.loaded = true;
+        stringAnnounce.loaded = true;
       });
 
       var GenAccDC = function(AccDCObjects, gImport, parentDC) {
         var wheel = [],
-          getScript = function(dc, u, f, isLink) {
+          getScript = function(DC, u, f, isLink) {
+            var dc = wheel[DC.indexVal];
             var urls = $A.isArray(u) ? u : [u],
               Cache = new $A.ScriptCache({
                 tag: isLink ? "link" : "script",
@@ -4463,19 +4459,24 @@ https://github.com/whatsock/w3c-alternative-text-computation
               },
               "array"
             );
+            return dc;
           },
-          changeTabs = function(dc, isClose) {
-            var dc = wheel[dc.indexVal];
+          changeTabs = function(DC, isClose) {
+            var dc = wheel[DC.indexVal];
+            if ((dc.isTab || dc.isToggle) && dc.toggleClassName) {
+              $A.query(dc.trigger, function() {
+                if (this !== dc.triggerObj) {
+                  $A.remClass(wl.triggerObj, dc.toggleClassName);
+                }
+              });
+            }
+            var w = 0,
+              wl = null;
             if (dc.isTab) {
               if (dc.toggleClassName) {
-                for (var w = 0; w < dc.siblings.length; w++) {
-                  var wl = dc.siblings[w];
+                for (w = 0; w < dc.siblings.length; w++) {
+                  wl = dc.siblings[w];
                   if (wl.isTab) {
-                    $A.query(dc.trigger, function() {
-                      if (this != dc.triggerObj) {
-                        $A.remClass(wl.triggerObj, dc.toggleClassName);
-                      }
-                    });
                     $A.toggleClass(
                       wl.triggerObj,
                       wl.loaded,
@@ -4486,14 +4487,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
               }
             } else if (dc.isToggle) {
               if (dc.toggleClassName) {
-                for (var w = 0; w < dc.siblings.length; w++) {
-                  var wl = dc.siblings[w];
+                for (w = 0; w < dc.siblings.length; w++) {
+                  wl = dc.siblings[w];
                   if (wl.isToggle) {
-                    $A.query(dc.trigger, function() {
-                      if (this != dc.triggerObj) {
-                        $A.remClass(wl.triggerObj, dc.toggleClassName);
-                      }
-                    });
                     $A.toggleClass(
                       wl.triggerObj,
                       wl.loaded,
@@ -4503,10 +4499,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 }
               }
             }
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          loadAccDCObj = function(dc) {
-            var dc = wheel[dc.indexVal];
+          loadAccDCObj = function(DC) {
+            var dc = wheel[DC.indexVal];
             if (
               (dc.loaded && !dc.allowReopen && !dc.isToggle) ||
               dc.fn.override ||
@@ -4521,9 +4517,12 @@ https://github.com/whatsock/w3c-alternative-text-computation
               dc.fn.bypass = false;
               if (dc.isToggle) return dc;
             }
+            var w = 0,
+              wt = null,
+              wtA = [];
             if (dc.widgetType && $A._widgetTypes.length) {
-              for (var w = 0; w < $A._widgetTypes.length; w++) {
-                var wt = $A.reg.get($A._widgetTypes[w]);
+              for (w = 0; w < $A._widgetTypes.length; w++) {
+                wt = $A.reg.get($A._widgetTypes[w]);
                 if (
                   wt &&
                   wt.autoCloseWidget &&
@@ -4541,9 +4540,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
               dc.autoCloseSameWidget &&
               $A._regWidgets.has(dc.widgetType)
             ) {
-              var wtA = $A._regWidgets.get(dc.widgetType);
-              for (var w = 0; w < wtA.length; w++) {
-                var wt = $A.reg.get(wtA[w]);
+              wtA = $A._regWidgets.get(dc.widgetType);
+              for (w = 0; w < wtA.length; w++) {
+                wt = $A.reg.get(wtA[w]);
                 if (wt && wt.loaded) {
                   wt.fn.bypass = true;
                   wt.close();
@@ -4586,7 +4585,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
               "a",
               {
                 id: dc.closeId,
-                href: "#"
+                href: "#close"
               },
               dc.sraCSS,
               dc.closeClassName
@@ -4782,10 +4781,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   parseRemaining(dc);
               }
             }
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          parseRemaining = function(dc) {
-            var dc = wheel[dc.indexVal];
+          parseRemaining = function(DC) {
+            var dc = wheel[DC.indexVal];
             dc.runDuring.apply(dc, [dc]);
             if (dc.allowCascade) {
               if (dc.fn.proto.runDuring) dc.fn.proto.runDuring.apply(dc, [dc]);
@@ -4985,10 +4984,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
             } else {
               complete();
             }
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          closeAccDCObj = function(dc) {
-            var dc = wheel[dc.indexVal];
+          closeAccDCObj = function(DC) {
+            var dc = wheel[DC.indexVal];
             dc.runBeforeClose.apply(dc, [dc]);
             if (dc.allowCascade) {
               if (dc.fn.proto.runBeforeClose)
@@ -5022,24 +5021,25 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 $A.fn.globalDC.runAfterClose.apply(dc, [dc]);
               }
             }
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          unsetTrigger = function(dc) {
-            var dc = wheel[dc.indexVal];
+          unsetTrigger = function(DC) {
+            var dc = wheel[DC.indexVal];
             $A.query(dc.fn.trigger, function() {
               $A.off(this, dc.fn.bind);
               if (dc.isTab || dc.isToggle) $A.remove($A.data(this, "sra"));
             });
             dc.fn.trigger = dc.fn.bind = "";
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          setTrigger = function(dc) {
-            var dc = wheel[dc.indexVal];
+          setTrigger = function(DC) {
+            var dc = wheel[DC.indexVal];
             unsetTrigger(dc);
-            return (wheel[dc.indexVal] = setBindings(dc));
+            setBindings(dc);
+            return dc;
           },
-          setAutoFix = function(dc) {
-            var dc = wheel[dc.indexVal];
+          setAutoFix = function(DC) {
+            var dc = wheel[DC.indexVal];
             if (!dc.loading && !dc.loaded) return dc;
             var cs = {
               position: "fixed",
@@ -5084,24 +5084,25 @@ https://github.com/whatsock/w3c-alternative-text-computation
               case 9:
                 cs.top = "40%";
                 cs.left = "40%";
+                break;
               default:
                 cs = dc.cssObj;
             }
             $A.css(dc.outerNode, cs);
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          sizeAutoFix = function(dc) {
-            var dc = wheel[dc.indexVal];
+          sizeAutoFix = function(DC) {
+            var dc = wheel[DC.indexVal];
             if (!dc.loading && !dc.loaded) return dc;
             var win = $A._getWindow();
             var bodyW = win.width,
               bodyH = win.height,
               aW = $A.elementWidth(dc.outerNode),
               aH = $A.elementHeight(dc.outerNode);
-            if (bodyW > aW) var npw = parseInt(((aW / bodyW) * 100) / 2);
-            else var npw = 50;
-            if (bodyH > aH) var nph = parseInt(((aH / bodyH) * 100) / 2);
-            else var nph = 50;
+            var npw = 50;
+            if (bodyW > aW) npw = parseInt(((aW / bodyW) * 100) / 2, 10);
+            var nph = 50;
+            if (bodyH > aH) nph = parseInt(((aH / bodyH) * 100) / 2, 10);
             switch (dc.autoFix) {
               case 1:
               case 5:
@@ -5116,6 +5117,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   left: 50 - npw + "%",
                   top: 50 - nph + "%"
                 });
+                break;
+              default:
             }
             if (
               dc.offsetTop < 0 ||
@@ -5129,29 +5132,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
               cs.left += dc.offsetLeft;
               $A.css(dc.outerNode, cs);
             }
-            return (wheel[dc.indexVal] = dc);
+            return dc;
           },
-          /*@ToDo
-          setDrag = function(dc) {
-            if (
-              $A.setDragAndDrop &&
-              typeof $A.setDragAndDrop == "function" &&
-              $A.setDragAndDrop.setDrag &&
-              typeof $A.setDragAndDrop.setDrag == "function"
-            )
-              $A.setDragAndDrop.setDrag.apply(this, [dc, wheel, $]);
-          },
-          unsetDrag = function(dc, uDrop) {
-            if (
-              $A.setDragAndDrop &&
-              typeof $A.setDragAndDrop == "function" &&
-              $A.setDragAndDrop.unsetDrag &&
-              typeof $A.setDragAndDrop.unsetDrag == "function"
-            )
-              $A.setDragAndDrop.unsetDrag.apply(this, [dc, uDrop, wheel, $]);
-          },
-*/
-          autoStart = [],
           setBindings = function(dc) {
             dc.fn.toggleFocus = dc.fn.containsFocus = false;
             dc.fn.trigger = dc.trigger;
@@ -5236,7 +5218,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             var f = function() {};
             f.prototype = dc;
             var nDC = new f();
-            nDC = setBindings(nDC);
+            setBindings(nDC);
             if (React && nDC.React.component) {
               nDC.React.component = React.cloneElement(nDC.React.component, {
                 DC: nDC
@@ -5265,6 +5247,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             $A.reg.set(nDC.id, nDC);
             return nDC;
           },
+          autoStart = [],
           svs = [
             "runJSOnceBefore",
             "runOnceBefore",
@@ -5279,7 +5262,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
             "runAfterClose"
           ];
 
-        for (var a = 0; a < AccDCObjects.length; a++) {
+        var a = 0,
+          s = 0;
+
+        for (a = 0; a < AccDCObjects.length; a++) {
           var dc = {
               id: "",
               role: "",
@@ -5699,7 +5685,7 @@ focusOut: function(ev, dc){ },
             unmount: dc["close"]
           });
 
-          if (aO.mode == 6) var ajaxOptions = dc.ajaxOptions;
+          if (aO.mode === 6) var ajaxOptions = dc.ajaxOptions;
 
           if (typeof aO.allowCascade !== "boolean") {
             if (typeof gImport.allowCascade === "boolean")
@@ -5710,7 +5696,7 @@ focusOut: function(ev, dc){ },
           }
 
           if (aO.allowCascade) {
-            for (var s = 0; s < svs.length; s++) {
+            for (s = 0; s < svs.length; s++) {
               gO[svs[s]] = $A.fn.globalDC[svs[s]];
               iO[svs[s]] = gImport[svs[s]];
             }
@@ -5722,11 +5708,11 @@ focusOut: function(ev, dc){ },
 
           $A.extend(true, dc, aO);
 
-          if (aO.mode == 6 && ajaxOptions)
+          if (aO.mode === 6 && ajaxOptions)
             $A.extend(dc.ajaxOptions, ajaxOptions);
 
           if (dc.allowCascade) {
-            for (var s = 0; s < svs.length; s++) {
+            for (s = 0; s < svs.length; s++) {
               $A.fn.globalDC[svs[s]] = gO[svs[s]];
             }
             dc.fn.proto = iO;
@@ -5769,9 +5755,9 @@ focusOut: function(ev, dc){ },
           }
         }
 
-        for (var a = 0; a < wheel.length; a++) wheel[a].siblings = wheel;
+        for (a = 0; a < wheel.length; a++) wheel[a].siblings = wheel;
 
-        for (var s = 0; s < autoStart.length; s++) {
+        for (s = 0; s < autoStart.length; s++) {
           var dc = wheel[autoStart[s]];
           if (!dc.triggerObj && dc.trigger) {
             dc.triggerObj = $A.query(dc.trigger)[0] || null;
@@ -5794,7 +5780,7 @@ focusOut: function(ev, dc){ },
 
       window[window.AccDCNamespace ? window.AccDCNamespace : "$A"] = $A;
 
-      return $A;
+      return (window.AccDC = $A);
     })()
   );
 }

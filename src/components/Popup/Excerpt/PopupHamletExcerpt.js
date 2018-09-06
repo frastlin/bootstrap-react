@@ -3,9 +3,6 @@ import React from "react";
 let $A = window.AccDC;
 
 class PopupHamletExcerpt extends React.Component {
-  constructor(props) {
-    super(props);
-  }
   handleClose(ev) {
     $A(this).unmount();
     ev.preventDefault();
@@ -17,7 +14,7 @@ class PopupHamletExcerpt extends React.Component {
         <p className="close">
           <a
             onClick={ev => this.handleClose(ev)}
-            href="#"
+            href="#close"
             className="popupClose"
           >
             <img

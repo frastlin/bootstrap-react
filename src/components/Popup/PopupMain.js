@@ -4,8 +4,6 @@ import strap from "../../AccDC/DC";
 // Import the React Popup component that will be dynamically rendered
 import PopupQuote from "./Excerpt/PopupHamletExcerpt";
 
-let $A = window.AccDC;
-
 class PopupMain extends React.Component {
   componentDidMount() {
     strap.setPopup(
@@ -19,7 +17,7 @@ class PopupMain extends React.Component {
           autoCloseOnTabOut: true,
 
           runAfter: function(DC) {
-            // $A.beep();
+            // Do something
           }
         }
       }
@@ -43,7 +41,7 @@ class PopupMain extends React.Component {
           <p>
             <a
               id="popupId"
-              href="#"
+              href="#popup"
               className="accPopup excerpt"
               data-controls="Quote"
               data-popup="popup"
