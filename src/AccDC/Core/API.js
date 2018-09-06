@@ -4837,32 +4837,35 @@ https://github.com/whatsock/w3c-alternative-text-computation
             if (dc.cssObj) $A.css(dc.outerNode, dc.cssObj);
             if (dc.autoFix) setAutoFix(dc);
             if (dc.root) {
-              if (dc.append) $A.append(dc.outerNode, $A.query(dc.root)[0]);
-              else if (dc.prepend) {
-                if (!$A.firstChild($A.query(dc.root)[0]))
-                  $A.append(dc.outerNode, $A.query(dc.root)[0]);
-                else
-                  $A.insertBefore(
-                    dc.outerNode,
-                    $A.firstChild($A.query(dc.root)[0])
-                  );
-              } else $A.insert(dc.outerNode, $A.query(dc.root)[0]);
-            } else if (dc.targetObj)
-              $A.insertAfter(dc.outerNode, $A.query(dc.targetObj)[0]);
-            else if (dc.triggerObj)
-              $A.insertAfter(dc.outerNode, $A.query(dc.triggerObj)[0]);
+              if (dc.before) {
+                if (typeof dc.before === "function")
+                  dc.before.apply(dc, [dc.outerNode, dc.root]);
+                else $A.before(dc.outerNode, dc.root);
+              } else if (dc.prepend) {
+                if (typeof dc.prepend === "function")
+                  dc.prepend.apply(dc, [dc.outerNode, dc.root]);
+                else {
+                  if (!$A.firstChild(dc.root)) $A.before(dc.outerNode, dc.root);
+                  else $A.prepend(dc.outerNode, dc.root);
+                }
+              } else if (dc.append) {
+                if (typeof dc.append === "function")
+                  dc.append.apply(dc, [dc.outerNode, dc.root]);
+                else {
+                  if (!$A.firstChild(dc.root)) $A.after(dc.outerNode, dc.root);
+                  else $A.append(dc.outerNode, dc.root);
+                }
+              } else if (dc.after) {
+                if (typeof dc.after === "function")
+                  dc.after.apply(dc, [dc.outerNode, dc.root]);
+                else $A.after(dc.outerNode, dc.root);
+              } else $A.insert(dc.outerNode, dc.root);
+            } else if (dc.targetObj) $A.insertAfter(dc.outerNode, dc.targetObj);
+            else if (dc.triggerObj) $A.insertAfter(dc.outerNode, dc.triggerObj);
             var complete = function() {
               if (dc.importCSS) {
                 getScript(dc, dc.importCSS, null, true);
               }
-              /*@ToDo
-            if (dc.isDraggable && dc.drag.persist && dc.drag.x && dc.drag.y) {
-              $A.css(dc.outerNode, {
-                left: dc.drag.x,
-                top: dc.drag.y
-              });
-} else 
-*/
               if (dc.autoPosition > 0 && !dc.root && !dc.autoFix) {
                 $A._calcPosition(dc);
               }
@@ -4954,16 +4957,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                     $A.fn.globalDC.runAfter.apply(dc, [dc]);
                 }
               } else dc.reverseJSOrderPass = false;
-              if (
-                dc.autoFix
-                /*@ToDo
-&& (!dc.isDraggable || !dc.drag.persist || !dc.drag.x || !dc.drag.y)
-*/
-              )
-                sizeAutoFix(dc);
-              /*@ToDo
-            if (dc.isDraggable) setDrag(dc);
-*/
+              if (dc.autoFix) sizeAutoFix(dc);
               if (forceFocus) $A._setFocus(dc.fn.sraStart);
               if ($A.bootstrap) $A.bootstrap(dc.container);
               if (dc.announce) $A.announce(dc.container);
@@ -4997,9 +4991,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
             }
             if (!dc.loaded || dc.lock) return dc;
             dc.closing = true;
-            /*@ToDo
-            if (dc.isDraggable) unsetDrag(dc);
-*/
             if (ReactDOM && $A.data(dc.container, "HasReactComponent")) {
               $A.unmount(dc.container);
             }
@@ -5393,9 +5384,13 @@ https://github.com/whatsock/w3c-alternative-text-computation
               toggleClassName: "",
               forceFocus: false,
               returnFocus: true,
+
               root: "",
+              before: false,
               prepend: false,
               append: false,
+              after: false,
+
               isTab: false,
               autoStart: false,
               lock: false,
@@ -5436,162 +5431,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 var dc = dc || this;
                 return closeAccDCObj(dc);
               },
-
-              /*@ToDo
-              isDraggable: false,
-              drag: {
-                handle: null,
-                maxX: null,
-                maxY: null,
-                persist: false,
-                x: null,
-                y: null,
-                confineTo: null,
-                init: null,
-                override: null
-              },
-              onDragStart: function(ev, dd, dc) {},
-              onDragEnd: function(ev, dd, dc) {},
-              onDrag: function(ev, dd, dc) {},
-              dropTarget: null,
-              dropInit: null,
-              drop: {},
-              onDropStart: function(ev, dd, dc) {},
-              onDrop: function(ev, dd, dc) {},
-              onDropEnd: function(ev, dd, dc) {},
-              setDrag: function(dc) {
-                var dc = dc || this;
-                return setDrag(dc);
-              },
-              unsetDrag: function(dc, uDrop) {
-                if (dc && typeof dc === "boolean") {
-                  uDrop = dc;
-                  dc = this;
-                } else var dc = dc || this;
-                unsetDrag(dc, uDrop);
-                return dc;
-              },
-              accDD: {
-                on: false,
-                dragText: "Move",
-                toText: "to",
-                dropTargets: [],
-                // Must match the accepted values for aria-dropeffect
-                dropEffect: "move",
-                actionText: "Dragging",
-                returnFocusTo: "",
-                isDragging: false,
-                dragClassName: "",
-                dragLinkStyle: {},
-                duration: 500,
-                fireDrag: function(ev, dc) {
-                  var os = $A._offset(this);
-                  dc.accDD.dragDD = {
-                    drag: this,
-                    proxy: this,
-                    drop: dc.accDD.dropTargets,
-                    available: dc.accDD.dropTargets,
-                    startX: os.left + os.width / 2,
-                    startY: os.top + os.height / 2,
-                    deltaX: 0,
-                    deltaY: 0,
-                    originalX: os.left,
-                    originalY: os.top,
-                    offsetX: 0,
-                    offsetY: 0
-                  };
-                  dc.accDD.dragDD.target = $A.query(dc.drag.handle)[0] || this;
-                  dc.onDragStart.apply(this, [ev, dc.accDD.dragDD, dc]);
-                },
-                fireDrop: function(ev, dc) {
-                  var that = this,
-                    os = $A._offset(this);
-                  dc.accDD.dropDD = {
-                    target: this,
-                    drag: dc.accDD.dragDD.drag,
-                    proxy: dc.accDD.dragDD.proxy,
-                    drop: dc.accDD.dragDD.drop,
-                    available: dc.accDD.dragDD.available,
-                    startX: dc.accDD.dragDD.startX,
-                    startY: dc.accDD.dragDD.startY,
-                    originalX: dc.accDD.dragDD.originalX,
-                    originalY: dc.accDD.dragDD.originalY,
-                    deltaX: 0,
-                    deltaY: 0,
-                    offsetX: os.left,
-                    offsetY: os.top
-                  };
-                  // BG:3.4:11/15/2017
-                  function update() {
-                    // BG:3.4:11/15/2017
-                    var os = $A._offset(dc.accDD.dragDD.drag);
-                    dc.accDD.dragDD.offsetY = os.top;
-                    dc.accDD.dragDD.offsetX = os.left;
-                  }
-                  $A.transition(
-                    dc.accDD.dragDD.drag,
-                    {
-                      top: dc.accDD.dropDD.offsetY,
-                      left: dc.accDD.dropDD.offsetX
-                    },
-                    {
-                      duration: dc.accDD.duration,
-                      step: function() {
-                        update();
-                        dc.onDrag.apply(dc.accDD.dragDD.drag, [
-                          ev,
-                          dc.accDD.dragDD,
-                          dc
-                        ]);
-                      },
-                      complete: function() {
-                        update();
-                        if (
-                          dc.accDD.dragDD.originalY <= dc.accDD.dragDD.offsetY
-                        )
-                          dc.accDD.dragDD.deltaY = dc.accDD.dropDD.deltaY =
-                            dc.accDD.dragDD.originalY - dc.accDD.dragDD.offsetY;
-                        else if (
-                          dc.accDD.dragDD.originalY >= dc.accDD.dragDD.offsetY
-                        )
-                          dc.accDD.dragDD.deltaY = dc.accDD.dropDD.deltaY =
-                            0 -
-                            (dc.accDD.dragDD.offsetY -
-                              dc.accDD.dragDD.originalY);
-                        if (
-                          dc.accDD.dragDD.originalX <= dc.accDD.dragDD.offsetX
-                        )
-                          dc.accDD.dragDD.deltaX = dc.accDD.dropDD.deltaX =
-                            dc.accDD.dragDD.originalX - dc.accDD.dragDD.offsetX;
-                        else if (
-                          dc.accDD.dragDD.originalX >= dc.accDD.dragDD.offsetX
-                        )
-                          dc.accDD.dragDD.deltaX = dc.accDD.dropDD.deltaX =
-                            0 -
-                            (dc.accDD.dragDD.offsetX -
-                              dc.accDD.dragDD.originalX);
-
-                        var rft = dc.accDD.returnFocusTo;
-
-                        dc.onDropStart.apply(that, [ev, dc.accDD.dropDD, dc]);
-                        dc.onDrop.apply(that, [ev, dc.accDD.dropDD, dc]);
-                        dc.onDropEnd.apply(that, [ev, dc.accDD.dropDD, dc]);
-                        dc.onDragEnd.apply(dc.accDD.dragDD.drag, [
-                          ev,
-                          dc.accDD.dragDD,
-                          dc
-                        ]);
-
-                        $A._setFocus($A.query(rft)[0] || dc.outerNode);
-
-                        dc.accDD.isDragging = false;
-                        $A.setAttr(dc.outerNode, "aria-grabbed", "false");
-                      }
-                    }
-                  );
-                }
-              },
-*/
 
               /*
 // Index of events plus returned arguments when set withinDC objects
