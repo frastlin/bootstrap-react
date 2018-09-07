@@ -88,7 +88,7 @@ class Carousel extends React.Component {
               title: stateMsg,
               "aria-label": stateMsg
             })
-            .toggleClass(isStopped, "stopped")
+            .toggleClass("stopped", isStopped)
             .mount(
               isStopped
                 ? '<span aria-hidden="true">O</span>'

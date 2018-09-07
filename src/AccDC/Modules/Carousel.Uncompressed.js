@@ -436,12 +436,13 @@ export function loadAccCarouselModule() {
             }
           });
 
-          if (sett.hiddenMsg && !$A.isTouch())
+          if (sett.hiddenMsg && !$A.isTouch()) {
             msgNode = $A("<div>" + sett.hiddenMsg + "</div>")
               .css($A.sraCSS)
-              .insertBefore(container)
+              .before(container)
               .announce()
               .return();
+          }
         }
 
         if (sett.stopRotation) DC.enableAuto(false);

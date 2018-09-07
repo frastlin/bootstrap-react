@@ -1,5 +1,5 @@
 /*
-AccDC 4X - 4.2018.0.1 BETA + React
+AccDC 4X - 4.2018.0.2 BETA + React
 Copyright 2010-2018 Bryan Garaventa (WhatSock.com)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
 */
@@ -25,7 +25,7 @@ export function $AccDC() {
   return (
     window.AccDC ||
     (function() {
-      var accDCVersion = "4.2018.0.1",
+      var accDCVersion = "4.2018.0.2",
         $A = function(dc, dcA, dcI, onReady, disableAsync) {
           if (!arguments.length && this === $A) {
             return $A;
@@ -70,7 +70,7 @@ export function $AccDC() {
             }
             if (typeof dc === "string") {
               let t = dc;
-              if ($A.isHTMLString(t)) t = $A.toNode(t);
+              if ($A.isHTML(t)) t = $A.toNode(t);
               else t = $A.query(t, dcA, dcI)[0];
               if (t) dc = t;
             }
@@ -321,6 +321,60 @@ export function $AccDC() {
 
         //@* Return-With-Type Methods
 
+        toDC: function(o, sett) {
+          if (this.isClonedAccDCObject) {
+            sett = o;
+            o = this.currentObject;
+          }
+          if (typeof o === "string") o = $A.toNode(o, true);
+          var isDOMNode = o && o.nodeType === 1 ? true : false,
+            hasParent = isDOMNode && o.parentNode ? true : false,
+            id = isDOMNode && o.id ? o.id : $A.genId();
+          if (isDOMNode && o.id !== id) o.id = id;
+          var init = {
+            id: id,
+            fn: {
+              isMorphedAccDCObject: true
+            },
+            autoStart: hasParent
+          };
+          if ($A.isReact(o))
+            $A.extend(init, {
+              React: {
+                component: o
+              }
+            });
+          else if (isDOMNode && !hasParent && o !== document.body)
+            init.source = o;
+          else if (hasParent) {
+            var ext = {};
+            if ($A.nextSibling(o)) {
+              ext.root = $A.nextSibling(o);
+              ext.before = true;
+            } else if ($A.prevSibling(o)) {
+              ext.root = $A.prevSibling(o);
+              ext.after = true;
+            } else if (o.parentNode) {
+              ext.root = o.parentNode;
+              ext.append = true;
+            }
+            $A.extend(init, ext);
+          }
+          var DC = null;
+          $A.extend(
+            init,
+            {
+              onCreated: function(dc) {
+                if (hasParent) $A.append(o, dc.container);
+                DC = dc;
+              }
+            },
+            sett || {}
+          );
+          $A([init]);
+          return DC;
+        },
+
         toNode: function(s, elementOnly) {
           if (this.isClonedAccDCObject) {
             elementOnly = s;
@@ -447,7 +501,28 @@ export function $AccDC() {
             : false;
         },
 
-        isHTMLString: function(s) {
+        hasDC: function(o) {
+          if (this.isClonedAccDCObject) {
+            o = this.currentObject;
+          }
+          return (
+            $A.isDC(o) ||
+            ($A.isReact(o) && $A.isDC(o.props && o.props.DC)) ||
+            $A.reg.has(o)
+          );
+        },
+
+        isMorphedDC: function(o) {
+          return o &&
+            typeof o === "object" &&
+            o.fn &&
+            o.fn.isAccDCObject &&
+            o.fn.isMorphedAccDCObject
+            ? true
+            : false;
+        },
+
+        isHTML: function(s) {
           if (this.isClonedAccDCObject) {
             s = this.currentObject;
           }
@@ -460,7 +535,7 @@ export function $AccDC() {
 
         _stringToNode: function(o, retArray, context) {
           if (typeof o === "string") {
-            if ($A.isHTMLString(o)) {
+            if ($A.isHTML(o)) {
               let r = $A.toNode(o);
               return retArray ? [r] : r;
             } else {
@@ -1027,6 +1102,7 @@ error: function(error, promise){}
               $A.empty(root);
               root.appendChild(obj);
             }
+            if (fn && typeof fn === "function") fn.apply(obj, [obj]);
           }
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
@@ -1050,16 +1126,17 @@ error: function(error, promise){}
         before: function(obj, existingNode, fn) {
           if (this.isClonedAccDCObject) {
             fn = existingNode;
-            existingNode = this.currentObject;
+            existingNode = obj;
+            obj = this.currentObject;
           }
-          obj = $A.insertBefore(obj, existingNode, fn);
+          obj = $A._insertBefore(obj, existingNode, fn);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
           } else return obj;
         },
 
-        insertBefore: function(obj, existingNode, fn) {
+        _insertBefore: function(obj, existingNode, fn) {
           if (this.isClonedAccDCObject) {
             fn = existingNode;
             existingNode = obj;
@@ -1080,16 +1157,17 @@ error: function(error, promise){}
         after: function(obj, existingNode, fn) {
           if (this.isClonedAccDCObject) {
             fn = existingNode;
-            existingNode = this.currentObject;
+            existingNode = obj;
+            obj = this.currentObject;
           }
-          obj = $A.insertAfter(obj, existingNode, fn);
+          obj = $A._insertAfter(obj, existingNode, fn);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
           } else return obj;
         },
 
-        insertAfter: function(obj, existingNode, fn) {
+        _insertAfter: function(obj, existingNode, fn) {
           if (this.isClonedAccDCObject) {
             fn = existingNode;
             existingNode = obj;
@@ -1118,7 +1196,7 @@ error: function(error, promise){}
           if (root.nodeType && root.appendChild) {
             if (typeof obj === "string") obj = $A._stringToNode(obj);
             var fc = $A.firstChild(root);
-            if (fc) $A.insertBefore(obj, fc);
+            if (fc) $A._insertBefore(obj, fc);
             else root.appendChild(obj);
           }
           if (fn && typeof fn === "function") fn.apply(obj, [obj]);
@@ -1224,22 +1302,20 @@ error: function(error, promise){}
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
           }
-          if (document.createRange) {
-            try {
-              var range = document.createRange();
-              range.selectNodeContents(o);
-              o = range.extractContents();
-            } catch (e) {}
-          } else {
-            try {
-              var f = document.createDocumentFragment(),
-                node = $A.firstChild(o);
+          try {
+            var range = document.createRange();
+            range.selectNodeContents(o);
+            o = range.extractContents();
+          } catch (e) {
+            var f = document.createDocumentFragment();
+            if ($A.firstChild(o)) {
+              var node = $A.firstChild(o);
               while (node) {
                 f.appendChild(o.removeChild(node));
                 node = $A.firstChild(o);
               }
-              o = f;
-            } catch (e) {}
+            }
+            o = f;
           }
           return o;
         },
@@ -1298,7 +1374,7 @@ error: function(error, promise){}
           if (save) $A.data(obj, "onRemoveParameters", save);
           $A.on(obj, "accdcremovenode", function(ev, dc) {
             if (typeof fn === "function")
-              fn.call(this, ev, $A.data(obj, "onRemoveParameters"));
+              fn.call(this, ev, $A.data(obj, "onRemoveParameters") || dc);
           });
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
@@ -1306,7 +1382,7 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        remove: function(obj, skipDelete, fn) {
+        remove: function(obj, skipDelete) {
           if (this.isClonedAccDCObject) {
             skipDelete = obj;
             obj = this.currentObject;
@@ -1335,18 +1411,16 @@ error: function(error, promise){}
         },
 
         destroy: function(id, p) {
-          if ($A.isDC(id)) var r = id;
-          else var r = $A.reg.get(id);
+          var r = null;
+          if ($A.isDC(id)) r = id;
+          else r = $A.reg.get(id);
           if (!$A.isDC(id)) return false;
           var a = r.outerNode,
             c = r.container;
           if (p && r.loaded) {
-            var fc = $A.firstChild(c);
-            while (fc) {
-              $A.insertBefore(fc, a);
-              fc = $A.firstChild(c);
-            }
-          } else if (r.loaded) {
+            $A._insertBefore($A.extractNodes(c), a);
+          }
+          if (r.loaded) {
             r.fn.bypass = true;
             r.close();
             r.fn.bypass = false;
@@ -1492,6 +1566,7 @@ error: function(error, promise){}
           // or h1
           if (mode === 1) {
             let r = $A.query(e, context)[0];
+            if (typeof fn === "function") fn.call(r, r);
             return r;
           }
 
@@ -1507,15 +1582,16 @@ error: function(error, promise){}
                 selector: obj.selector
               },
               success: function(node) {
-                $A.insert(node, context);
+                $A.insert(node, context, fn);
               }
             });
             return context;
           }
 
           // Or get the node matching the referenced ID.
+          // document.getElementById cannot be used because it doesn't always work correctly in React
           let r = $A.query("#" + e, context)[0];
-
+          if (typeof fn === "function") fn.call(r, r);
           return r;
         },
 
@@ -1533,10 +1609,6 @@ error: function(error, promise){}
           if (s && typeof s === "object" && s.nodeType === 3) return s;
           else if (typeof s !== "string") s = "";
           return document.createTextNode(s);
-        },
-
-        createAttr: function(a) {
-          return document.createAttribute(a);
         },
 
         getAttr: function(e, n) {
@@ -1615,16 +1687,14 @@ error: function(error, promise){}
           }
           if (!e) return this.isClonedAccDCObject ? this : e;
           e = $A._stringToNode(e);
-          var E = $A._checkStoredNodes(e);
-          e = $A.isArray(E) ? E : [E];
+          e = $A._checkStoredNodes(e, true);
           e = e ? e.previousSibling : null;
           while (e) {
             if (
               e.nodeType === 1 &&
-              (!t || t.toLowerCase() === e.nodeName.toLowerCase())
-            ) {
+              (!t || (t && typeof t === "function" && t(e)))
+            )
               break;
-            }
             e = e.previousSibling;
           }
           if (this.isClonedAccDCObject) {
@@ -1640,16 +1710,14 @@ error: function(error, promise){}
           }
           if (!e) return this.isClonedAccDCObject ? this : e;
           e = $A._stringToNode(e);
-          var E = $A._checkStoredNodes(e);
-          e = $A.isArray(E) ? E : [E];
+          e = $A._checkStoredNodes(e, true);
           e = e ? e.nextSibling : null;
           while (e) {
             if (
               e.nodeType === 1 &&
-              (!t || t.toLowerCase() === e.nodeName.toLowerCase())
-            ) {
+              (!t || (t && typeof t === "function" && t(e)))
+            )
               break;
-            }
             e = e.nextSibling;
           }
           if (this.isClonedAccDCObject) {
@@ -1665,13 +1733,12 @@ error: function(error, promise){}
           }
           if (!e) return this.isClonedAccDCObject ? this : e;
           e = $A._stringToNode(e);
-          var E = $A._checkStoredNodes(e);
-          e = $A.isArray(E) ? E : [E];
+          e = $A._checkStoredNodes(e, true);
           e = e ? e.firstChild : null;
           while (e) {
             if (
               e.nodeType === 1 &&
-              (!t || t.toLowerCase() === e.nodeName.toLowerCase())
+              (!t || (t && typeof t === "function" && t(e)))
             )
               break;
             e = e.nextSibling;
@@ -1689,13 +1756,12 @@ error: function(error, promise){}
           }
           if (!e) return this.isClonedAccDCObject ? this : e;
           e = $A._stringToNode(e);
-          var E = $A._checkStoredNodes(e);
-          e = $A.isArray(E) ? E : [E];
+          e = $A._checkStoredNodes(e, true);
           e = e ? e.lastChild : null;
           while (e) {
             if (
               e.nodeType === 1 &&
-              (!t || t.toLowerCase() === e.nodeName.toLowerCase())
+              (!t || (t && typeof t === "function" && t(e)))
             )
               break;
             e = e.previousSibling;
@@ -1714,7 +1780,7 @@ error: function(error, promise){}
           if (!node) return this.isClonedAccDCObject ? this : node;
           while (node) {
             node = node.parentNode;
-            if (fn(node)) {
+            if (typeof fn === "function" && fn(node)) {
               if (this.isClonedAccDCObject) {
                 this.currentObject = node;
                 return this;
@@ -1799,28 +1865,34 @@ error: function(error, promise){}
           } else return ob;
         },
 
-        hasClass: function(obj, cn) {
+        hasClass: function(o, cn) {
           if (this.isClonedAccDCObject) {
-            cn = obj;
-            obj = this.currentObject;
+            cn = o;
+            o = this.currentObject;
           }
-          if (!obj || !obj.className || !cn) {
+          if (
+            !o ||
+            o.nodeType !== 1 ||
+            !o.className ||
+            !cn ||
+            typeof cn !== "string"
+          )
             return false;
-          }
-          obj = $A._stringToNode(obj);
-          var o = $A._checkStoredNodes(obj, true);
-          if (!o || o.nodeType !== 1) {
-            return false;
-          }
           var names = cn.split(/\s+/),
-            oClasses = o.className ? o.className.split(/\s+/) : [],
-            i = 0;
-          for (var n = 0; n < names.length; n++) {
-            if ($A.inArray(names[n], oClasses) !== -1) i += 1;
+            i = 0,
+            n = 0;
+          try {
+            var cL = o.classList;
+            for (n = 0; n < names.length; n++) {
+              if (cL.contains(names[n])) i += 1;
+            }
+          } catch (e) {
+            var oClasses = o.className ? o.className.split(/\s+/) : [];
+            for (n = 0; n < names.length; n++) {
+              if (oClasses.indexOf(names[n]) !== -1) i += 1;
+            }
           }
-          let r = false;
-          if (i === names.length) r = true;
-          return r;
+          return i === names.length;
         },
 
         addClass: function(obj, cn) {
@@ -1828,19 +1900,28 @@ error: function(error, promise){}
             cn = obj;
             obj = this.currentObject;
           }
-          if (!obj || !cn) return this.isClonedAccDCObject ? this : obj;
+          if (!obj || !cn || typeof cn !== "string")
+            return this.isClonedAccDCObject ? this : obj;
           obj = $A._stringToNode(obj);
           var o = $A._checkStoredNodes(obj);
           if (!$A.isArray(o)) o = [o];
           var names = cn.split(/\s+/);
           for (var x = 0; x < o.length; x++) {
-            if (o[x] && o[x].nodeType === 1 && !$A.hasClass(o[x], cn)) {
-              var oClasses = o[x].className ? o[x].className.split(/\s+/) : [];
-              for (var n = 0; n < names.length; n++) {
-                if ($A.inArray(names[n], oClasses) === -1)
-                  oClasses.push(names[n]);
+            var n = 0;
+            try {
+              var cL = o[x].classList;
+              for (n = 0; n < names.length; n++) cL.add(names[n]);
+            } catch (e) {
+              if (o[x] && o[x].nodeType === 1 && !$A.hasClass(o[x], cn)) {
+                var oClasses = o[x].className
+                  ? o[x].className.split(/\s+/)
+                  : [];
+                for (n = 0; n < names.length; n++) {
+                  if (oClasses.indexOf(names[n]) === -1)
+                    oClasses.push(names[n]);
+                }
+                o[x].className = oClasses.join(" ");
               }
-              o[x].className = oClasses.join(" ");
             }
           }
 
@@ -1855,20 +1936,29 @@ error: function(error, promise){}
             cn = obj;
             obj = this.currentObject;
           }
-          if (!obj || !obj.className || !cn)
+          if (!obj || !obj.className || !cn || typeof cn !== "string")
             return this.isClonedAccDCObject ? this : obj;
           obj = $A._stringToNode(obj);
           var o = $A._checkStoredNodes(obj);
           if (!$A.isArray(o)) o = [o];
           var names = cn.split(/\s+/);
+
           for (var x = 0; x < o.length; x++) {
-            if (o[x] && o[x].nodeType === 1 && $A.hasClass(o[x], cn)) {
-              var oClasses = o[x].className ? o[x].className.split(/\s+/) : [],
-                nc = [];
-              for (var n = 0; n < oClasses.length; n++) {
-                if ($A.inArray(oClasses[n], names) === -1) nc.push(oClasses[n]);
+            var n = 0;
+            try {
+              var cL = o[x].classList;
+              for (n = 0; n < names.length; n++) cL.remove(names[n]);
+            } catch (e) {
+              if (o[x] && o[x].nodeType === 1 && $A.hasClass(o[x], cn)) {
+                var oClasses = o[x].className
+                    ? o[x].className.split(/\s+/)
+                    : [],
+                  nc = [];
+                for (n = 0; n < oClasses.length; n++) {
+                  if (names.indexOf(oClasses[n]) === -1) nc.push(oClasses[n]);
+                }
+                o[x].className = nc.join(" ");
               }
-              o[x].className = nc.join(" ");
             }
           }
 
@@ -1878,16 +1968,22 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        toggleClass: function(obj, isTrue, cn) {
+        toggleClass: function(obj, cn, isTrue) {
           if (this.isClonedAccDCObject) {
-            cn = isTrue;
-            isTrue = obj;
+            isTrue = cn;
+            cn = obj;
             obj = this.currentObject;
           }
-          if (isTrue) {
-            $A.addClass(obj, cn);
-          } else {
-            $A.remClass(obj, cn);
+          if (!obj || !cn || typeof cn !== "string")
+            return this.isClonedAccDCObject ? this : obj;
+          obj = $A._stringToNode(obj);
+          var o = $A._checkStoredNodes(obj, true);
+          if (typeof isTrue !== "boolean") isTrue = !$A.hasClass(o, cn);
+          try {
+            o.classList.toggle(cn, isTrue);
+          } catch (e) {
+            if (isTrue) $A.addClass(o, cn);
+            else $A.remClass(o, cn);
           }
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
@@ -4192,7 +4288,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
         // Long-hand method names for alternative usage
         getElement: $A["getEl"],
         createElement: $A["createEl"],
-        createAttribute: $A["createAttr"],
         getAttribute: $A["getAttr"],
         removeAttribute: $A["remAttr"],
         setAttribute: $A["setAttr"],
@@ -4479,8 +4574,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   if (wl.isTab) {
                     $A.toggleClass(
                       wl.triggerObj,
-                      wl.loaded,
-                      dc.toggleClassName
+                      dc.toggleClassName,
+                      wl.loaded
                     );
                   }
                 }
@@ -4492,8 +4587,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   if (wl.isToggle) {
                     $A.toggleClass(
                       wl.triggerObj,
-                      wl.loaded,
-                      dc.toggleClassName
+                      dc.toggleClassName,
+                      wl.loaded
                     );
                   }
                 }
@@ -4845,23 +4940,31 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 if (typeof dc.prepend === "function")
                   dc.prepend.apply(dc, [dc.outerNode, dc.root]);
                 else {
-                  if (!$A.firstChild(dc.root)) $A.before(dc.outerNode, dc.root);
-                  else $A.prepend(dc.outerNode, dc.root);
+                  try {
+                    $A.prepend(dc.outerNode, dc.root);
+                  } catch (e) {
+                    $A.before(dc.outerNode, dc.root);
+                  }
                 }
               } else if (dc.append) {
                 if (typeof dc.append === "function")
                   dc.append.apply(dc, [dc.outerNode, dc.root]);
                 else {
-                  if (!$A.firstChild(dc.root)) $A.after(dc.outerNode, dc.root);
-                  else $A.append(dc.outerNode, dc.root);
+                  try {
+                    $A.append(dc.outerNode, dc.root);
+                  } catch (e) {
+                    $A.after(dc.outerNode, dc.root);
+                  }
                 }
               } else if (dc.after) {
                 if (typeof dc.after === "function")
                   dc.after.apply(dc, [dc.outerNode, dc.root]);
                 else $A.after(dc.outerNode, dc.root);
               } else $A.insert(dc.outerNode, dc.root);
-            } else if (dc.targetObj) $A.insertAfter(dc.outerNode, dc.targetObj);
-            else if (dc.triggerObj) $A.insertAfter(dc.outerNode, dc.triggerObj);
+            } else if (dc.targetObj)
+              $A._insertAfter(dc.outerNode, dc.targetObj);
+            else if (dc.triggerObj)
+              $A._insertAfter(dc.outerNode, dc.triggerObj);
             var complete = function() {
               if (dc.importCSS) {
                 getScript(dc, dc.importCSS, null, true);
