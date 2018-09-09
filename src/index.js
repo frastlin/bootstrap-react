@@ -7,7 +7,7 @@ import "./VisualARIA/Load";
 import "./css/global.css";
 import MainTabList from "./components/MainTabList";
 
-import IntroContent from "./components/Intro/IntroMain";
+import IntroContent from "./components/intro/IntroMain";
 
 // Use $A.insert, $A.insertWithin, $A.before, $A.after, $A.prepend, $A.prependTo, $A.append, or $A.appendTo to render standard markup or DOM nodes.
 // To remove a DOM node, use $A.remove. E.G $A(DOM_Node).remove();
