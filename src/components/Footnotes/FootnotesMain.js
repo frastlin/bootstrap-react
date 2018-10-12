@@ -1,6 +1,17 @@
 import React from "react";
 import strap from "../../AccDC/DC";
 
+/* Directions for Accessible Footnotes
+
+1. Import AccDC/DC.
+
+2. At the beginning of each footnote definition at the end of the page, add an empty span element, and ensure each span has a unique ID.
+
+3. Surround all words or phrases within the body that are meant to be footnotes with a span element, and ensure that each of these spans includes className="accFootnote", plus a data-footnote attribute that references the ID of the relevant footnote as set in step 2. Multiple footnotes that reference the same ID is supported.
+
+4. Exicute setFootnotes() to set all footnotes as configured.
+*/
+
 class FootnotesMain extends React.Component {
   componentDidMount() {
     strap.setFootnotes(this, {

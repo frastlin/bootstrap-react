@@ -13,7 +13,7 @@ import "../css/popup.css";
 import "../css/tabs.css";
 
 // Import all React component TabPanels controlled by this Tablist
-import Intro from "./intro/IntroMain";
+import Intro from "./Intro/IntroMain";
 import Accordion from "./Accordion/AccordionMain";
 import Banner from "./Banner/BannerMain";
 import Calendar from "./Calendar/CalendarMain";

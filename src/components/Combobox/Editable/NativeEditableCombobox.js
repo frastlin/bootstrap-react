@@ -2,6 +2,17 @@ import React from "react";
 import zenscroll from "zenscroll";
 import strap from "../../../AccDC/DC";
 
+/* Directions for Accessible Comboboxes
+
+1. Import AccDC/DC.
+
+2. Include a target edit field for use as a combobox field on the page, and ensure it has a unique ID plus a role="combobox" attribute. Also specify if it is meant to be read-only or not by adding or omitting the readonly attribute. The HTML5 required attribute can also be added to enhance functionality as needed.
+
+3. Optionally add an image icon as a dropdown triggering element next to the edit field, make sure it has a unique ID attribute, ensure it includes a valid role and accessible label in accordance with the ARIA spec. This will be set during configuration using the myCombobox instance object after initialization. (View the Readonly Combobox for example.)
+
+4. Populate the native hidden select element that is used to configure the available dropdown options when using the combobox. To create a Multiselect combobox, add the 'multiple' attribute to the hidden select element. View the external ReadMe file for related instructions for using this feature.
+*/
+
 import HiddenOptions from "./Options";
 window.noZensmooth = true;
 

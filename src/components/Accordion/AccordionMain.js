@@ -1,6 +1,23 @@
 import React from "react";
 import strap from "../../AccDC/DC";
 
+/* Directions for Accessible Accordions
+
+1. Import AccDC/DC.
+
+2. Import or create named React components to render accordion content.
+
+3. Using a native button or link as triggering elements, add a data-accordiongroup attribute to all shared accordion triggering elements.
+
+4. Ensure all triggering elements include a unique ID attribute, as well as all DOM container elements where each accordion component will be rendered.
+
+5. Add a data-insert attribute to each triggering element, and ensure its value matches the ID attribute of the associated container element.
+
+6. Add a data-defaultopen="true" attribute to the triggering element of any accordion that is meant to open when first loaded.
+
+7. Add a data-controls attribute to each triggering element and make sure the name of the attribute matches the object property name of the related React component as submitted to setAccordion().
+*/
+
 // Import all React component regions controlled by this accordion
 import AlternativeRock from "./Alternative/AlternativeRock";
 import Classical from "./Classical/Classical";

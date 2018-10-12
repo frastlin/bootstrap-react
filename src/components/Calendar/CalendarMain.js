@@ -1,6 +1,19 @@
 import React from "react";
 import strap from "../../AccDC/DC";
 
+/* Directions for Accessible Date Pickers
+
+1. Import AccDC/DC.
+
+2. Include a target edit field for use as a date picker field on the page, and ensure it has a unique ID. Also specify if it is meant to be read-only or not by adding or omitting the readonly attribute. It is a best practice to always make such fields editable and then use a formatting script to ensure the correct format after focus moves out of the field.
+
+3. Add a native link or button as a Calendar triggering element next to the edit field, make sure it has a unique ID attribute, ensure it includes the attribute data-widget="calendar", and include a data-controls attribute that references the ID attribute of the associated edit field in step 2.
+
+4. Run the setCalendar(() function with custom overrides to create the date picker functionality.
+
+5. To individualize different calendar types, break out the instructions above for use within separate React components so they can be configured seperatly.
+*/
+
 class CalendarMain extends React.Component {
   componentDidMount() {
     strap.setCalendar(this, {

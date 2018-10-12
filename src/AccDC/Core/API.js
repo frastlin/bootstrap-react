@@ -1,5 +1,5 @@
 /*
-AccDC 4X - 4.2018.0.2 BETA + React
+AccDC 4X BETA - 4.2018.0.3 + React
 Copyright 2010-2018 Bryan Garaventa (WhatSock.com)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
 */
@@ -10,7 +10,11 @@ import ReactDOM from "react-dom";
 // AccDC leverages the following import dependancies
 
 // https://www.npmjs.com/package/react-html-parser
-import ReactHtmlParser from "react-html-parser";
+import ReactHtmlParser, {
+  processNodes,
+  convertNodeToElement,
+  htmlparser2
+} from "react-html-parser";
 
 // https://www.npmjs.com/package/bean
 import bean from "bean";
@@ -25,10 +29,12 @@ export function $AccDC() {
   return (
     window.AccDC ||
     (function() {
-      var accDCVersion = "4.2018.0.2",
+      var accDCVersion = "4.2018.0.3",
         $A = function(dc, dcA, dcI, onReady, disableAsync) {
           if (!arguments.length && this === $A) {
             return $A;
+          } else if ($A.isChain(dc) && arguments.length === 1) {
+            return dc;
           } else if (typeof dc === "function" && arguments.length === 1) {
             if ($A.documentLoaded) {
               dc();
@@ -38,19 +44,29 @@ export function $AccDC() {
               });
             }
             return $A;
-          } else if (dc && $A.isArray(dc) && dc.length && dc[0] && dc[0].id) {
+          } else if (
+            dc &&
+            $A.isArray(dc) &&
+            dc.length &&
+            dc[0] &&
+            typeof dc[0] === "object" &&
+            dc[0].id &&
+            !dc[0].nodeType
+          ) {
             disableAsync = onReady;
             onReady = dcI;
             dcI = dcA;
             dcA = dc;
             dc = null;
           } else if (
-            dc &&
-            ($A.isDC(dc) || $A.reg.has(dc)) &&
-            $A.isArray(dcA) &&
-            dcA.length &&
-            dcA[0] &&
-            dcA[0].id
+            ((dc && $A.isDC(dc)) || $A.reg.has(dc)) &&
+            (dcA &&
+              $A.isArray(dcA) &&
+              dcA.length &&
+              dcA[0] &&
+              typeof dcA[0] === "object" &&
+              dcA[0].id &&
+              !dcA[0].nodeType)
           ) {
             if ($A.reg.has(dc)) dc = $A.reg.get(dc);
           } else if (dc || (this && this !== $A)) {
@@ -69,7 +85,7 @@ export function $AccDC() {
                   : document;
             }
             if (typeof dc === "string") {
-              let t = dc;
+              var t = dc;
               if ($A.isHTML(t)) t = $A.toNode(t);
               else t = $A.query(t, dcA, dcI)[0];
               if (t) dc = t;
@@ -82,11 +98,11 @@ export function $AccDC() {
           var fn = function() {
             var w = GenAccDC(dcA, dcI, dc);
             if (
-              $A.lastCreatedCallback &&
-              typeof $A.lastCreatedCallback === "function"
+              $A._lastCreatedCallback &&
+              typeof $A._lastCreatedCallback === "function"
             )
-              $A.lastCreatedCallback.call($A, w);
-            $A.lastCreatedCallback = null;
+              $A._lastCreatedCallback.call($A, w);
+            $A._lastCreatedCallback = null;
             return w;
           };
 
@@ -187,8 +203,6 @@ export function $AccDC() {
       };
 
       $A.extend({
-        //@* AccDC Methods
-
         beep: function() {
           var snd = new Audio(
             "data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRd2qAAAAACiDgAAAAAAABCqEEQRLCgwpBGMlJkIz8jKhGvj4k6jzRnqasNKIeoh5gI7BJaC1A1AoNBjJgbyApVS4IDlZgDU5WUAxEKDNmmALHzZp0Fkz1FMTmGFl1FMEyodIavcCAUHDWrKAIA4aa2oCgILEBupZgHvAhEBcZ6joQBxS76AgccrFlczBvKLC0QI2cBoCFvfTDAo7eoOQInqDPBtvrDEZBNYN5xwNwxQRfw8ZQ5wQVLvO8OYU+mHvFLlDh05Mdg7BT6YrRPpCBznMB2r//xKJjyyOh+cImr2/4doscwD6neZjuZR4AgAABYAAAABy1xcdQtxYBYYZdifkUDgzzXaXn98Z0oi9ILU5mBjFANmRwlVJ3/6jYDAmxaiDG3/6xjQQCCKkRb/6kg/wW+kSJ5//rLobkLSiKmqP/0ikJuDaSaSf/6JiLYLEYnW/+kXg1WRVJL/9EmQ1YZIsv/6Qzwy5qk7/+tEU0nkls3/zIUMPKNX/6yZLf+kFgAfgGyLFAUwY//uQZAUABcd5UiNPVXAAAApAAAAAE0VZQKw9ISAAACgAAAAAVQIygIElVrFkBS+Jhi+EAuu+lKAkYUEIsmEAEoMeDmCETMvfSHTGkF5RWH7kz/ESHWPAq/kcCRhqBtMdokPdM7vil7RG98A2sc7zO6ZvTdM7pmOUAZTnJW+NXxqmd41dqJ6mLTXxrPpnV8avaIf5SvL7pndPvPpndJR9Kuu8fePvuiuhorgWjp7Mf/PRjxcFCPDkW31srioCExivv9lcwKEaHsf/7ow2Fl1T/9RkXgEhYElAoCLFtMArxwivDJJ+bR1HTKJdlEoTELCIqgEwVGSQ+hIm0NbK8WXcTEI0UPoa2NbG4y2K00JEWbZavJXkYaqo9CRHS55FcZTjKEk3NKoCYUnSQ0rWxrZbFKbKIhOKPZe1cJKzZSaQrIyULHDZmV5K4xySsDRKWOruanGtjLJXFEmwaIbDLX0hIPBUQPVFVkQkDoUNfSoDgQGKPekoxeGzA4DUvnn4bxzcZrtJyipKfPNy5w+9lnXwgqsiyHNeSVpemw4bWb9psYeq//uQZBoABQt4yMVxYAIAAAkQoAAAHvYpL5m6AAgAACXDAAAAD59jblTirQe9upFsmZbpMudy7Lz1X1DYsxOOSWpfPqNX2WqktK0DMvuGwlbNj44TleLPQ+Gsfb+GOWOKJoIrWb3cIMeeON6lz2umTqMXV8Mj30yWPpjoSa9ujK8SyeJP5y5mOW1D6hvLepeveEAEDo0mgCRClOEgANv3B9a6fikgUSu/DmAMATrGx7nng5p5iimPNZsfQLYB2sDLIkzRKZOHGAaUyDcpFBSLG9MCQALgAIgQs2YunOszLSAyQYPVC2YdGGeHD2dTdJk1pAHGAWDjnkcLKFymS3RQZTInzySoBwMG0QueC3gMsCEYxUqlrcxK6k1LQQcsmyYeQPdC2YfuGPASCBkcVMQQqpVJshui1tkXQJQV0OXGAZMXSOEEBRirXbVRQW7ugq7IM7rPWSZyDlM3IuNEkxzCOJ0ny2ThNkyRai1b6ev//3dzNGzNb//4uAvHT5sURcZCFcuKLhOFs8mLAAEAt4UWAAIABAAAAAB4qbHo0tIjVkUU//uQZAwABfSFz3ZqQAAAAAngwAAAE1HjMp2qAAAAACZDgAAAD5UkTE1UgZEUExqYynN1qZvqIOREEFmBcJQkwdxiFtw0qEOkGYfRDifBui9MQg4QAHAqWtAWHoCxu1Yf4VfWLPIM2mHDFsbQEVGwyqQoQcwnfHeIkNt9YnkiaS1oizycqJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU="
@@ -217,10 +231,12 @@ export function $AccDC() {
         },
 
         _version: accDCVersion,
-        lastCreated: [],
-        lastCreatedCallback: false,
 
-        //@* Object Binding Methods
+        lastCreated: [],
+        _lastCreatedCallback: false,
+        lastCreatedCallback: function(fn) {
+          if (typeof fn === "function") $A._lastCreatedCallback = fn;
+        },
 
         _boundAccDCRefObjects: new Map(),
         _boundObjectIds: new Map(),
@@ -264,7 +280,7 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
           }
-          let r = $A._boundObjectIds.get(o);
+          var r = $A._boundObjectIds.get(o);
           return r;
         },
 
@@ -272,7 +288,7 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             id = this.currentObject;
           }
-          let r = $A._boundAccDCRefObjects.get(id);
+          var r = $A._boundAccDCRefObjects.get(id);
           return r;
         },
 
@@ -307,7 +323,7 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
           }
-          let r = $A._boundObjects.get(o);
+          var r = $A._boundObjects.get(o);
           return r;
         },
 
@@ -315,20 +331,26 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
           }
-          let r = $A._boundObjects.has(o);
+          var r = $A._boundObjects.has(o);
           return r;
         },
-
-        //@* Return-With-Type Methods
 
         toDC: function(o, sett) {
           if (this.isClonedAccDCObject) {
             sett = o;
             o = this.currentObject;
           }
-          if (typeof o === "string") o = $A.toNode(o, true);
+          o = $A._stringToNode(o);
+          o = $A._checkStoredNodes(o, true);
+          if (!sett && o && typeof o === "object" && o.nodeType !== 1) {
+            sett = o;
+            o = null;
+          }
           var isDOMNode = o && o.nodeType === 1 ? true : false,
-            hasParent = isDOMNode && o.parentNode ? true : false,
+            hasParent =
+              isDOMNode && o.parentNode && o.parentNode.nodeType === 1
+                ? true
+                : false,
             id = isDOMNode && o.id ? o.id : $A.genId();
           if (isDOMNode && o.id !== id) o.id = id;
           var init = {
@@ -338,34 +360,20 @@ export function $AccDC() {
             },
             autoStart: hasParent
           };
-          if ($A.isReact(o))
+          if ($A.isReact(o)) {
             $A.extend(init, {
               React: {
                 component: o
               }
             });
-          else if (isDOMNode && !hasParent && o !== document.body)
+          } else if (isDOMNode && o !== document.body) {
             init.source = o;
-          else if (hasParent) {
-            var ext = {};
-            if ($A.nextSibling(o)) {
-              ext.root = $A.nextSibling(o);
-              ext.before = true;
-            } else if ($A.prevSibling(o)) {
-              ext.root = $A.prevSibling(o);
-              ext.after = true;
-            } else if (o.parentNode) {
-              ext.root = o.parentNode;
-              ext.append = true;
-            }
-            $A.extend(init, ext);
           }
           var DC = null;
           $A.extend(
             init,
             {
               onCreated: function(dc) {
-                if (hasParent) $A.append(o, dc.container);
                 DC = dc;
               }
             },
@@ -375,38 +383,40 @@ export function $AccDC() {
           return DC;
         },
 
+        _storeNodes: function(f, elementOnly) {
+          if (f.nodeType === 11) {
+            var nl = [];
+            $A.loop(
+              f.childNodes,
+              function(i, o) {
+                if (o.nodeType === 1) nl.push(o);
+              },
+              "array"
+            );
+            $A.data(f, "StoredNodeList", nl);
+            if (elementOnly) return nl[0];
+          }
+          return f;
+        },
+
         toNode: function(s, elementOnly) {
           if (this.isClonedAccDCObject) {
             elementOnly = s;
             s = this.currentObject;
           }
-          var storeNodes = function(f) {
-            if (f.nodeType === 11) {
-              var nl = [];
-              $A.loop(
-                f.childNodes,
-                function(i, o) {
-                  if (o.nodeType === 1) nl.push(o);
-                },
-                "array"
-              );
-              if (elementOnly) return nl[0];
-              else $A.data(f, "StoredNodeList", nl);
-            }
-            return f;
-          };
-          if (document.createRange) {
+          if (typeof s === "string") {
             try {
-              s = storeNodes(
-                document.createRange().createContextualFragment(s)
+              s = $A._storeNodes(
+                document.createRange().createContextualFragment(s),
+                elementOnly
               );
-            } catch (e) {}
-          } else {
-            try {
+            } catch (e) {
               var f = document.createDocumentFragment();
-              $A.insertMarkup(s, f);
-              s = storeNodes(f);
-            } catch (e) {}
+              $A.insertHTML(s, f);
+              s = $A._storeNodes(f, elementOnly);
+            }
+          } else {
+            s = $A._checkStoredNodes(s, elementOnly);
           }
           if (this.isClonedAccDCObject) {
             this.currentObject = s;
@@ -425,7 +435,19 @@ export function $AccDC() {
             !$A.isReact(o) &&
             (typeof o === "string" || o.nodeType)
           ) {
-            o = ReactHtmlParser(o);
+            if (o && o.nodeType === 11) {
+              o = $A._checkStoredNodes(o, true);
+            }
+            o = ReactHtmlParser(
+              o && typeof o === "object" && o.nodeType && o.outerHTML
+                ? o.outerHTML
+                : o && typeof o === "object" && o.nodeType === 3 && o.data
+                  ? o.data
+                  : o
+            );
+          }
+          if (!$A.isReact(o)) {
+            o = null;
           }
           if (this.isClonedAccDCObject) {
             this.currentObject = o;
@@ -434,6 +456,7 @@ export function $AccDC() {
         },
 
         _clone: function(o) {
+          if ($A.isChain(o)) return o;
           var f = function(o) {
             this.isClonedAccDCObject = true;
             this.currentObject = o;
@@ -475,8 +498,6 @@ export function $AccDC() {
           return null;
         },
 
-        //@* Filter and Identification Methods
-
         isReact: function(o) {
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
@@ -493,6 +514,12 @@ export function $AccDC() {
               return true;
           } catch (e) {}
           return false;
+        },
+
+        isChain: function(o) {
+          return o && typeof o === "object" && o.isClonedAccDCObject
+            ? true
+            : false;
         },
 
         isDC: function(o) {
@@ -512,7 +539,10 @@ export function $AccDC() {
           );
         },
 
-        isMorphedDC: function(o) {
+        _isMorphedDC: function(o) {
+          if (this.isClonedAccDCObject) {
+            o = this.currentObject;
+          }
           return o &&
             typeof o === "object" &&
             o.fn &&
@@ -529,18 +559,18 @@ export function $AccDC() {
           if (!s || typeof s !== "string") {
             return false;
           }
-          let r = stringAnnounce.iterate(s, /<|>/g) > 1;
+          var r = stringAnnounce.iterate(s, /<|>/g) > 1;
           return r;
         },
 
         _stringToNode: function(o, retArray, context) {
           if (typeof o === "string") {
             if ($A.isHTML(o)) {
-              let r = $A.toNode(o);
-              return retArray ? [r] : r;
+              o = $A.toNode(o);
+              return retArray ? [o] : o;
             } else {
               context = context || document;
-              let r = $A.query(o, context);
+              var r = $A.query(o, context);
               if (!r.length) {
                 r.push($A.toTextNode(o));
               }
@@ -548,15 +578,15 @@ export function $AccDC() {
             }
           } else if (typeof o === "number") {
             o = $A.toTextNode(o.toString());
+            return retArray ? [o] : o;
           }
-          if (retArray) {
-            return $A.isArray(o) ? o : [o];
-          }
-          return o;
+          return retArray && !$A.isArray(o) ? [o] : o;
         },
 
         _checkStoredNodes: function(f, rNode) {
-          if (f && f.nodeType === 11) {
+          if ($A.isChain(f)) {
+            return $A._checkStoredNodes(f.return(), rNode);
+          } else if (f && f.nodeType === 11) {
             var nl = $A.data(f, "StoredNodeList");
             if (nl && nl.length) {
               if (rNode) return nl[0];
@@ -627,7 +657,7 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             v = this.currentObject;
           }
-          let o =
+          var o =
             typeof v === "object" &&
             typeof v.length === "number" &&
             !v.propertyIsEnumerable("length");
@@ -641,7 +671,7 @@ export function $AccDC() {
           }
           if (!searchFor || !inStack) return -1;
           if (inStack.indexOf) {
-            let r = inStack.indexOf(searchFor);
+            var r = inStack.indexOf(searchFor);
             return r;
           }
           for (var i = 0; i < inStack.length; i++) {
@@ -686,7 +716,8 @@ export function $AccDC() {
           }
 
           if (!con) con = document;
-          var r = [];
+          var r = [],
+            isA = true;
 
           if (!sel) {
             if (this.isClonedAccDCObject) {
@@ -706,10 +737,19 @@ export function $AccDC() {
             typeof sel === "object"
           ) {
             r = sel;
+            if (!$A.isArray(r)) isA = false;
           }
 
           if (call && typeof call === "function") {
-            $A.loop(r, call, $A.isArray(r) ? "array" : "object");
+            if (isA) {
+              for (var i = 0; i < r.length; i++) {
+                call.apply(r[i], [i, r[i]]);
+              }
+            } else if (r && typeof r === "object") {
+              for (var n in r) {
+                call.apply(r[n], [n, r[n]]);
+              }
+            }
           }
 
           if (this.isClonedAccDCObject) {
@@ -722,26 +762,36 @@ export function $AccDC() {
           if (this.isClonedAccDCObject) {
             n = this.currentObject;
           }
-          if (!n) return this.isClonedAccDCObject ? this : n;
-          let s = "";
+          if (!n) return this.isClonedAccDCObject ? this : "";
+          var s = "";
           if (n && n.nodeType === 1) s = n.innerText || n.textContent || "";
-          return s;
+          if (this.isClonedAccDCObject) {
+            this.currentObject = s;
+            return this;
+          } else return s;
         },
 
         find: function(id, fn) {
-          if (typeof id === "string") var ids = id.split(",");
+          var ids = [],
+            dcs = [];
+          if (typeof id === "string") ids = id.split(",");
           $A.loop(
             $A.reg,
             function(k, v) {
-              if (id === "*" || $A.inArray(k, ids) !== -1 || k === id) {
+              if (
+                (ids.length === 1 && ids[0] === "*") ||
+                (ids.length && $A.inArray(k, ids) !== -1) ||
+                k === id ||
+                (typeof id === "function" && id(k))
+              ) {
                 fn.call(v, v);
+                dcs.push(v);
               }
             },
             "map"
           );
+          return dcs;
         },
-
-        //@* AJAX Methods
 
         fetch: fetch,
 
@@ -911,15 +961,18 @@ error: function(error, promise){}
           } else return context;
         },
 
-        //@* Event Methods
-
         listener: bean,
 
-        on: function(ta, e, fn) {
+        on: function(ta, e, fn, save) {
           if (this.isClonedAccDCObject) {
+            save = fn;
             fn = e;
             e = ta;
             ta = this.currentObject;
+          }
+          if (fn && typeof fn !== "function") {
+            save = fn;
+            fn = null;
           }
           if (!ta || !e) return this.isClonedAccDCObject ? this : ta;
           var events = e;
@@ -931,6 +984,7 @@ error: function(error, promise){}
             obj,
             function(i, o) {
               if (typeof o === "object" && o.nodeType === 1) {
+                if (save) $A.data(o, "SavedEventParameters", save);
                 $A.loop(
                   events,
                   function(j, p) {
@@ -940,7 +994,12 @@ error: function(error, promise){}
                         j,
                         function(k, q) {
                           $A.listener.on(o, q, function(ev) {
-                            p.call(o, ev, $A.data(o, "DC"));
+                            p.call(
+                              o,
+                              ev,
+                              $A.data(o, "DC"),
+                              $A.data(o, "SavedEventParameters")
+                            );
                           });
                         },
                         "array"
@@ -950,7 +1009,12 @@ error: function(error, promise){}
                       typeof fn === "function"
                     )
                       $A.listener.on(o, p, function(ev) {
-                        fn.call(o, ev, $A.data(o, "DC"));
+                        fn.call(
+                          o,
+                          ev,
+                          $A.data(o, "DC"),
+                          $A.data(o, "SavedEventParameters")
+                        );
                       });
                   },
                   $A.isArray(events) ? "array" : "object"
@@ -970,9 +1034,9 @@ error: function(error, promise){}
             e = ta;
             ta = this.currentObject;
           }
-          if (!ta || !e) return this.isClonedAccDCObject ? this : ta;
+          if (!ta) return this.isClonedAccDCObject ? this : ta;
           var events = e;
-          ta = $A._stringToNode(ta, true);
+          ta = $A._stringToNode(ta);
           var obj = $A._checkStoredNodes(ta);
           if (!$A.isArray(obj)) obj = [obj];
           if (typeof events === "string") events = events.split(/\s+/);
@@ -980,13 +1044,18 @@ error: function(error, promise){}
             obj,
             function(i, o) {
               if (typeof o === "object" && o.nodeType === 1) {
-                $A.loop(
-                  events,
-                  function(j, p) {
-                    if (typeof p === "string") $A.listener.off(o, p);
-                  },
-                  $A.isArray(events) ? "array" : "object"
-                );
+                $A.removeData(o, "SavedEventParameters");
+                if (!e) {
+                  $A.listener.off(o);
+                } else {
+                  $A.loop(
+                    events,
+                    function(j, p) {
+                      if (typeof p === "string") $A.listener.off(o, p);
+                    },
+                    $A.isArray(events) ? "array" : "object"
+                  );
+                }
               }
             },
             "array"
@@ -1004,7 +1073,7 @@ error: function(error, promise){}
           }
           if (!ta || !e) return this.isClonedAccDCObject ? this : ta;
           var events = e;
-          ta = $A._stringToNode(ta, true);
+          ta = $A._stringToNode(ta);
           var obj = $A._checkStoredNodes(ta);
           if (!$A.isArray(obj)) obj = [obj];
           if (typeof events === "string") events = events.split(/\s+/);
@@ -1029,8 +1098,6 @@ error: function(error, promise){}
           } else return ta;
         },
 
-        //@* Data Storage Methods
-
         _widgetTypes: [],
         _regWidgets: new Map(),
         _dataMap: new Map(),
@@ -1044,7 +1111,7 @@ error: function(error, promise){}
           if (!obj) return this.isClonedAccDCObject ? this : obj;
           if (obj && key && !val) {
             if ($A._dataMap.has(obj) && $A._dataMap.get(obj).has(key)) {
-              let r = $A._dataMap.get(obj).get(key);
+              var r = $A._dataMap.get(obj).get(key);
               if (this.isClonedAccDCObject) {
                 this.currentObject = r;
                 return this;
@@ -1081,8 +1148,6 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        //@* Node Insertion Methods
-
         insert: function(obj, root, fn) {
           if (this.isClonedAccDCObject) {
             fn = root;
@@ -1094,10 +1159,10 @@ error: function(error, promise){}
             obj = $A.mount(obj, root, fn);
           } else if (root && root.nodeType && root.appendChild) {
             if (typeof obj === "string") {
-              $A.insertMarkup(obj, root);
+              $A.insertHTML(obj, root);
               obj = $A.firstChild(root);
             } else if (typeof obj === "number") {
-              $A.insertMarkup(obj.toString(), root);
+              $A.insertHTML(obj.toString(), root);
             } else if (obj && obj.nodeType) {
               $A.empty(root);
               root.appendChild(obj);
@@ -1110,13 +1175,12 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        insertWithin: function(obj, root, fn) {
+        insertWithin: function(root, obj, fn) {
           if (this.isClonedAccDCObject) {
-            fn = root;
-            root = obj;
+            fn = obj;
             obj = this.currentObject;
           }
-          obj = $A.insert(root, obj, fn);
+          obj = $A.insert(obj, root, fn);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
@@ -1206,13 +1270,12 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        prependTo: function(obj, root, fn) {
+        prependTo: function(root, obj, fn) {
           if (this.isClonedAccDCObject) {
-            fn = root;
-            root = obj;
+            fn = obj;
             obj = this.currentObject;
           }
-          obj = $A.prepend(root, obj, fn);
+          obj = $A.prepend(obj, root, fn);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
@@ -1237,20 +1300,19 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        appendTo: function(obj, root, fn) {
+        appendTo: function(root, obj, fn) {
           if (this.isClonedAccDCObject) {
-            fn = root;
-            root = obj;
+            fn = obj;
             obj = this.currentObject;
           }
-          obj = $A.append(root, obj, fn);
+          obj = $A.append(obj, root, fn);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
           } else return obj;
         },
 
-        insertMarkup: function(obj, root, pos, fn) {
+        insertHTML: function(obj, root, pos, fn) {
           if (this.isClonedAccDCObject) {
             fn = pos;
             pos = root;
@@ -1261,7 +1323,7 @@ error: function(error, promise){}
             pos = null;
           }
           root = $A._stringToNode(root);
-          if (!root) return this.isClonedAccDCObject ? this : obj;
+          if (!root) return this.isClonedAccDCObject ? this : null;
           if (root && root.nodeType && root.appendChild) {
             if (typeof obj === "number") obj = obj.toString();
             if (typeof obj === "string") {
@@ -1275,14 +1337,12 @@ error: function(error, promise){}
               else root.innerHTML = obj;
             }
           }
-          if (fn && typeof fn === "function") fn.apply(obj, [obj]);
+          if (fn && typeof fn === "function") fn.apply(root, [root]);
           if (this.isClonedAccDCObject) {
-            this.currentObject = obj;
+            this.currentObject = root;
             return this;
-          } else return obj;
+          } else return root;
         },
-
-        //@* Node Cleanup Methods
 
         _deleteNode: function(o) {
           if (document.createRange) {
@@ -1298,7 +1358,7 @@ error: function(error, promise){}
           }
         },
 
-        extractNodes: function(o) {
+        extractNodes: function(o, noFrag) {
           if (this.isClonedAccDCObject) {
             o = this.currentObject;
           }
@@ -1317,7 +1377,11 @@ error: function(error, promise){}
             }
             o = f;
           }
-          return o;
+          o = $A._storeNodes(o, noFrag);
+          if (this.isClonedAccDCObject) {
+            this.currentObject = o;
+            return this;
+          } else return o;
         },
 
         empty: function(obj, removeParent) {
@@ -1330,10 +1394,11 @@ error: function(error, promise){}
             for (var i = items.length; i--; ) {
               $A.remove(items[i], true);
             }
-            $A.insertMarkup("", obj);
+            $A.insertHTML("", obj);
           }
           if (removeParent) {
             $A.remove(obj);
+            obj = null;
           }
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
@@ -1351,7 +1416,7 @@ error: function(error, promise){}
           }
         },
 
-        _clean: function(obj) {
+        _clean: function(obj, sD) {
           if ($A.data(obj, "DC-ON")) {
             var dc = $A.data(obj, "DC");
             if ($A.isDC(dc) && dc.loaded) {
@@ -1359,8 +1424,9 @@ error: function(error, promise){}
               dc.close();
               dc.fn.bypass = false;
             }
-            $A.trigger(obj, "accdcremovenode");
           }
+          if (!sD && $A.data(obj, "onRemoveSet"))
+            $A.trigger(obj, "accdcremovenode");
           $A.removeData(obj);
           $A.listener.off(obj);
         },
@@ -1374,8 +1440,9 @@ error: function(error, promise){}
           if (save) $A.data(obj, "onRemoveParameters", save);
           $A.on(obj, "accdcremovenode", function(ev, dc) {
             if (typeof fn === "function")
-              fn.call(this, ev, $A.data(obj, "onRemoveParameters") || dc);
+              fn.call(this, ev, dc, $A.data(obj, "onRemoveParameters"));
           });
+          $A.data(obj, "onRemoveSet", true);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
@@ -1388,20 +1455,21 @@ error: function(error, promise){}
             obj = this.currentObject;
           }
 
-          if (obj.nodeType === 11) {
+          if (obj && obj.nodeType === 11) {
             var o = $A._checkStoredNodes(obj);
             if (o && o.length) {
-              $A.loop(
-                o,
-                function(i, d) {
-                  $A.remove(d);
-                },
-                "array"
-              );
+              for (var i = o.length; i--; ) {
+                $A.remove(o[i]);
+              }
             }
-          } else if (obj && obj.nodeType) {
             $A._clean(obj);
-            if (!skipDelete) $A._deleteNode(obj);
+            obj = null;
+          } else if (obj && obj.nodeType) {
+            $A._clean(obj, skipDelete);
+            if (!skipDelete) {
+              $A._deleteNode(obj);
+              obj = null;
+            }
           }
 
           if (this.isClonedAccDCObject) {
@@ -1427,7 +1495,7 @@ error: function(error, promise){}
           }
           r.runBeforeDestroy(r);
           $A.removeData(r.id);
-          r.id = r.outerNode = r.accDCObj = r.container = r.containerDiv = a = c = null;
+          r.id = r.outerNode = r.accDCObj = r.container = a = c = null;
           if (r.widgetType && r.autoCloseWidget) {
             var wtI = $A._widgetTypes.indexOf(r.id);
             if (wtI !== -1) {
@@ -1462,8 +1530,6 @@ error: function(error, promise){}
           return true;
         },
 
-        //@* React Integration Methods
-
         mount: function(obj, root, fn) {
           if (this.isClonedAccDCObject) {
             fn = root;
@@ -1472,11 +1538,16 @@ error: function(error, promise){}
           if (root) {
             if (ReactDOM && ReactHtmlParser) {
               if (typeof obj === "string" || obj.nodeType)
-                obj = ReactHtmlParser(obj);
+                obj = $A.toReact(obj);
               if (typeof root === "string") {
-                root = $A.query(root)[0];
+                root = $A(root).return();
               }
-              if (root && root.nodeType && root.appendChild) {
+              if ($A.hasDC(obj)) {
+                var dc = $A.getDC(obj);
+                dc.root = root;
+                dc.mount();
+                if (typeof fn === "function") fn.apply(obj, [obj, root]);
+              } else if (root && root.nodeType && root.appendChild) {
                 $A._cleanAll(root);
                 ReactDOM.render(obj, root, function() {
                   $A.data(root, "HasReactComponent", true);
@@ -1533,8 +1604,6 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        //@* Node ID and Creation Methods
-
         getEl: function(e, mode, context, fn) {
           if (mode && typeof mode === "function") {
             fn = mode;
@@ -1558,16 +1627,22 @@ error: function(error, promise){}
           context = context || document;
 
           if (typeof e !== "string") {
-            return null;
+            if (this.isClonedAccDCObject) {
+              this.currentObject = null;
+              return this;
+            } else return null;
           }
 
           // Get first match if CSS selector is used
           // E.G #container *.myClassName
           // or h1
           if (mode === 1) {
-            let r = $A.query(e, context)[0];
+            var r = $A.query(e, context)[0];
             if (typeof fn === "function") fn.call(r, r);
-            return r;
+            if (this.isClonedAccDCObject) {
+              this.currentObject = r;
+              return this;
+            } else return r;
           }
 
           // Pull DOM node from external html file plus CSS selector seperated by single space
@@ -1582,17 +1657,26 @@ error: function(error, promise){}
                 selector: obj.selector
               },
               success: function(node) {
-                $A.insert(node, context, fn);
+                if (context && context.nodeType === 1 && context.appendChild)
+                  $A.insert(node, context, fn);
+                else if (typeof fn === "function") fn.call(node, node);
               }
             });
-            return context;
+            if (this.isClonedAccDCObject) {
+              this.currentObject = context;
+              return this;
+            } else return context;
           }
 
           // Or get the node matching the referenced ID.
           // document.getElementById cannot be used because it doesn't always work correctly in React
-          let r = $A.query("#" + e, context)[0];
+          var r = $A.query("#" + e, context)[0];
           if (typeof fn === "function") fn.call(r, r);
-          return r;
+
+          if (this.isClonedAccDCObject) {
+            this.currentObject = r;
+            return this;
+          } else return r;
         },
 
         createEl: function(t) {
@@ -1619,7 +1703,7 @@ error: function(error, promise){}
           if (!e || !n) return null;
           e = $A._stringToNode(e);
           var E = $A._checkStoredNodes(e, true);
-          let r = null;
+          var r = null;
           if (E && E.nodeType === 1 && E.getAttribute) r = E.getAttribute(n);
           return r;
         },
@@ -1677,8 +1761,6 @@ error: function(error, promise){}
             return this;
           } else return e;
         },
-
-        //@* Traversal Methods
 
         prevSibling: function(e, t) {
           if (this.isClonedAccDCObject) {
@@ -1777,10 +1859,12 @@ error: function(error, promise){}
             fn = node;
             node = this.currentObject;
           }
-          if (!node) return this.isClonedAccDCObject ? this : node;
-          while (node) {
+          while (node && node.nodeType === 1) {
             node = node.parentNode;
-            if (typeof fn === "function" && fn(node)) {
+            if (
+              (!fn && node.nodeType === 1) ||
+              (typeof fn === "function" && fn(node))
+            ) {
               if (this.isClonedAccDCObject) {
                 this.currentObject = node;
                 return this;
@@ -1792,8 +1876,6 @@ error: function(error, promise){}
             return this;
           } else return null;
         },
-
-        //@* CSS Methods
 
         _getStyleObject: function(node) {
           var style = {};
@@ -1865,11 +1947,13 @@ error: function(error, promise){}
           } else return ob;
         },
 
-        hasClass: function(o, cn) {
+        hasClass: function(O, cn) {
           if (this.isClonedAccDCObject) {
-            cn = o;
-            o = this.currentObject;
+            cn = O;
+            O = this.currentObject;
           }
+          var t = $A._stringToNode(O);
+          var o = $A._checkStoredNodes(t, true);
           if (
             !o ||
             o.nodeType !== 1 ||
@@ -1968,23 +2052,55 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        toggleClass: function(obj, cn, isTrue) {
+        toggleClass: function(obj, cn, isTrue, fn) {
           if (this.isClonedAccDCObject) {
+            fn = isTrue;
             isTrue = cn;
             cn = obj;
             obj = this.currentObject;
           }
+          if (typeof isTrue === "function") {
+            fn = isTrue;
+            isTrue = null;
+          }
           if (!obj || !cn || typeof cn !== "string")
             return this.isClonedAccDCObject ? this : obj;
           obj = $A._stringToNode(obj);
-          var o = $A._checkStoredNodes(obj, true);
-          if (typeof isTrue !== "boolean") isTrue = !$A.hasClass(o, cn);
-          try {
-            o.classList.toggle(cn, isTrue);
-          } catch (e) {
-            if (isTrue) $A.addClass(o, cn);
-            else $A.remClass(o, cn);
+          var O = $A._checkStoredNodes(obj);
+          if (!$A.isArray(O)) O = [O];
+          for (var x = 0; x < O.length; x++) {
+            var o = O[x];
+            if (typeof isTrue !== "boolean") isTrue = !$A.hasClass(o, cn);
+            try {
+              o.classList.toggle(cn, isTrue);
+            } catch (e) {
+              if (isTrue) $A.addClass(o, cn);
+              else $A.remClass(o, cn);
+            }
+            if (typeof fn === "function") fn.apply(o, [isTrue]);
           }
+          if (this.isClonedAccDCObject) {
+            this.currentObject = obj;
+            return this;
+          } else return obj;
+        },
+
+        setOffScreen: function(obj) {
+          if (this.isClonedAccDCObject) {
+            obj = this.currentObject;
+          }
+          $A.css(obj, $A.sraCSS);
+          if (this.isClonedAccDCObject) {
+            this.currentObject = obj;
+            return this;
+          } else return obj;
+        },
+
+        clearOffScreen: function(obj) {
+          if (this.isClonedAccDCObject) {
+            obj = this.currentObject;
+          }
+          $A.css(obj, $A.sraCSSClear);
           if (this.isClonedAccDCObject) {
             this.currentObject = obj;
             return this;
@@ -2080,8 +2196,6 @@ error: function(error, promise){}
           $A.css(dc.outerNode, pos);
         },
 
-        //@* Offset Methods
-
         _getWindow: function() {
           return {
             width:
@@ -2141,11 +2255,7 @@ error: function(error, promise){}
             // Ensure only top and left properties are returned if returnTopLeftOnly = true
             r = {
               top: r.top,
-              left: r.left,
-              height: "",
-              width: "",
-              right: "",
-              bottom: ""
+              left: r.left
             };
           }
           return r;
@@ -2327,8 +2437,6 @@ error: function(error, promise){}
           };
         },
 
-        //@* ARIA Related Methods
-
         addIdRef: function(obj, attr, ids) {
           if (this.isClonedAccDCObject) {
             ids = attr;
@@ -2337,8 +2445,8 @@ error: function(error, promise){}
           }
           if (!obj || !attr || !ids || typeof ids !== "string")
             return this.isClonedAccDCObject ? this : obj;
-          obj = $A._stringToNode(obj);
-          var o = $A._checkStoredNodes(obj, true);
+          var t = $A._stringToNode(obj);
+          var o = $A._checkStoredNodes(t, true);
           $A.loop(
             o,
             function(i, o) {
@@ -2364,8 +2472,8 @@ error: function(error, promise){}
           }
           if (!obj || !attr || !ids || typeof ids !== "string")
             return this.isClonedAccDCObject ? this : obj;
-          obj = $A._stringToNode(obj);
-          var o = $A._checkStoredNodes(obj, true);
+          var t = $A._stringToNode(obj);
+          var o = $A._checkStoredNodes(t, true);
           var ds = (ids || "").split(/\s+/);
           $A.loop(
             o,
@@ -2385,11 +2493,7 @@ error: function(error, promise){}
           } else return obj;
         },
 
-        RovingTabIndex: function(options, container) {
-          container = $A._stringToNode(container);
-          var o = $A._checkStoredNodes(container, true);
-          if (container) options.container = container;
-
+        RovingTabIndex: function(options) {
           /*
 options = {
 container: DOM node container element for child nodes,
@@ -2495,12 +2599,15 @@ verticalStop: true or false
           } else that.breakPoint = false;
 
           that.activate = function(o) {
-            var i = $A.inArray(o, that.nodes);
-            if (i !== -1) {
+            var i = 0;
+            if (typeof o === "number") i = that.nodes[o] ? o : 0;
+            else i = $A.inArray(o, that.nodes) || 0;
+            if (that.nodes[i]) {
+              that.index = i;
               $A.setAttr(that.nodes, {
                 tabindex: -1
               });
-              $A.setAttr(o, {
+              $A.setAttr(that.nodes[i], {
                 tabindex: "0"
               });
             }
@@ -2509,28 +2616,27 @@ verticalStop: true or false
 
           that.setFocus = function(ev, instance, isClick) {
             instance = instance || that;
-            var l = this,
-              i = $A.inArray(l, instance.nodes);
-            if (i !== -1) instance.index = i;
-            $A.setAttr(instance.nodes, {
-              tabindex: -1
-            });
-            $A.setAttr(l, {
-              tabindex: "0"
-            });
+            var l = this;
+            instance.activate(l);
             if (!isClick) l.focus();
-            return that;
+            return instance;
+          };
+
+          that.focus = function(i) {
+            var inst = that;
+            if (typeof i !== "number") {
+              i = $A.data(i, "RTI-Index") || 0;
+              inst = $A.data(i, "RTI") || that;
+            } else i = i || 0;
+            if (inst.nodes.length && inst.nodes[i]) {
+              inst.activate(i);
+              inst.nodes[inst.index].focus();
+            }
+            return inst;
           };
 
           that.off = that.unbind = function() {
             $A.off(that.nodes, ".RovingTabIndex");
-            return that;
-          };
-
-          that.focus = function(i) {
-            that.index = i > 0 ? i : 0;
-            if (that.nodes.length && that.nodes[that.index].nodeType === 1)
-              that.setFocus.apply(that.nodes[that.index], [null, that]);
             return that;
           };
 
@@ -2548,6 +2654,8 @@ verticalStop: true or false
             $A.loop(
               that.nodes,
               function(i, o) {
+                $A.data(o, "RTI", that);
+                $A.data(o, "RTI-Index", i);
                 $A.data(o, "AccName", $A.getAccName(o).name.toLowerCase());
 
                 if (that.breakPoint) {
@@ -2586,6 +2694,12 @@ verticalStop: true or false
                       typeof that.handleClick === "function"
                     )
                       that.handleClick.apply(o, [ev, o, that, child]);
+
+                    if (
+                      that.handleOpen &&
+                      typeof that.handleOpen === "function"
+                    )
+                      that.handleOpen.apply(o, [ev, o, that, child, false]);
 
                     ev.stopPropagation();
                     ev.preventDefault();
@@ -2627,7 +2741,14 @@ verticalStop: true or false
                           that.handleClose &&
                           typeof that.handleClose === "function"
                         )
-                          that.handleClose.apply(o, [ev, o, that, that.parent]);
+                          that.handleClose.apply(o, [
+                            ev,
+                            o,
+                            that,
+                            that.parent,
+                            that.triggeringElement,
+                            true
+                          ]);
                         pass = true;
                       } else if (
                         (k === 37 &&
@@ -2784,7 +2905,28 @@ verticalStop: true or false
                         that.handleEsc &&
                         typeof that.handleEsc === "function"
                       ) {
-                        that.handleEsc.apply(o, [ev, o, that, that.parent]);
+                        that.handleEsc.apply(o, [
+                          ev,
+                          o,
+                          that,
+                          that.parent,
+                          that.triggeringElement
+                        ]);
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                      }
+                      if (
+                        that.handleClose &&
+                        typeof that.handleClose === "function"
+                      ) {
+                        that.handleClose.apply(o, [
+                          ev,
+                          o,
+                          that,
+                          that.parent,
+                          that.triggeringElement,
+                          false
+                        ]);
                         ev.stopPropagation();
                         ev.preventDefault();
                       }
@@ -2887,11 +3029,11 @@ verticalStop: true or false
                           typeof that.handleEnter === "function"
                         )
                           that.handleEnter.apply(o, [ev, o, that, child]);
-                        else if (
-                          that.handleClick &&
-                          typeof that.handleClick === "function"
+                        if (
+                          that.handleOpen &&
+                          typeof that.handleOpen === "function"
                         )
-                          that.handleClick.apply(o, [ev, o, that, child]);
+                          that.handleOpen.apply(o, [ev, o, that, child, false]);
 
                         ev.stopPropagation();
                         ev.preventDefault();
@@ -2938,7 +3080,7 @@ verticalStop: true or false
                           f = false;
 
                         for (i; i <= e; i++) {
-                          let name = $A.data(that.nodes[i], "AccName") || "";
+                          var name = $A.data(that.nodes[i], "AccName") || "";
                           if (name.indexOf(that.typed.toLowerCase()) === 0) {
                             f = true;
                             that.focus(i);
@@ -2948,7 +3090,7 @@ verticalStop: true or false
 
                         if (!f) {
                           for (b; b < that.index; b++) {
-                            let name = $A.data(that.nodes[b], "AccName") || "";
+                            var name = $A.data(that.nodes[b], "AccName") || "";
                             if (name.indexOf(that.typed.toLowerCase()) === 0) {
                               that.focus(b);
                               break;
@@ -2977,16 +3119,13 @@ verticalStop: true or false
                       that.handleFocus.apply(o, [ev, o, that]);
                   }
                 });
+
+                $A.setAttr(o, {
+                  tabindex: i === that.index ? 0 : -1
+                });
               },
               "array"
             );
-
-            $A.setAttr(that.nodes, {
-              tabindex: -1
-            });
-            $A.setAttr(that.nodes[that.index], {
-              tabindex: 0
-            });
           };
 
           that.on();
@@ -2995,7 +3134,7 @@ verticalStop: true or false
         },
 
         /*
-AccName Prototype 2.14, compute the Name and Description property values for a DOM node
+AccName Prototype 2.17, compute the Name and Description property values for a DOM node
 https://github.com/whatsock/w3c-alternative-text-computation
 */
         getAccName: function(node, fnc, preventVisualARIASelfCSSRef) {
@@ -3003,7 +3142,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
           if (!node || node.nodeType !== 1) {
             return props;
           }
-          var topNode = node;
+          var rootNode = node;
 
           // Track nodes to prevent duplicate node reference parsing.
           var nodes = [];
@@ -3067,7 +3206,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
               // Otherwise process list2 to identify roles to ignore processing name from content.
               else if (
                 inList(node, list2) ||
-                (node === topNode && !inList(node, list1))
+                (node === rootNode && !inList(node, list1))
               ) {
                 return true;
               } else {
@@ -3165,9 +3304,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 }
               }
               res.name += fResult.owns || "";
-              if (!trim(res.name) && trim(fResult.title)) {
+              if (rootNode === node && !trim(res.name) && trim(fResult.title)) {
                 res.name = addSpacing(fResult.title);
-              } else {
+              } else if (refNode === node && rootNode === node) {
                 res.title = addSpacing(fResult.title);
               }
               if (trim(fResult.desc)) {
@@ -3197,7 +3336,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   nodesToIgnoreValues &&
                   nodesToIgnoreValues.length &&
                   nodesToIgnoreValues.indexOf(node) !== -1 &&
-                  node === topNode &&
+                  node === rootNode &&
                   node !== refNode
                     ? true
                     : false;
@@ -3263,6 +3402,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   var nRole = getRole(node);
 
                   var isNativeFormField = nativeFormFields.indexOf(nTag) !== -1;
+                  var isNativeButton = ["input"].indexOf(nTag) !== -1;
                   var isRangeWidgetRole =
                     rangeWidgetRoles.indexOf(nRole) !== -1;
                   var isEditWidgetRole = editWidgetRoles.indexOf(nRole) !== -1;
@@ -3455,43 +3595,16 @@ https://github.com/whatsock/w3c-alternative-text-computation
                         ? true
                         : false;
 
-                    if (implicitLabel && explicitLabel && isImplicitFirst) {
-                      // Check for blank value, since whitespace chars alone are not valid as a name
-                      name = trim(
-                        walk(implicitLabel, true, skip, [node], false, {
-                          ref: ownedBy,
-                          top: implicitLabel
-                        }).name +
-                          " " +
-                          walk(explicitLabel, true, skip, [node], false, {
-                            ref: ownedBy,
-                            top: explicitLabel
-                          }).name
-                      );
-                    } else if (explicitLabel && implicitLabel) {
-                      // Check for blank value, since whitespace chars alone are not valid as a name
-                      name = trim(
-                        walk(explicitLabel, true, skip, [node], false, {
-                          ref: ownedBy,
-                          top: explicitLabel
-                        }).name +
-                          " " +
-                          walk(implicitLabel, true, skip, [node], false, {
-                            ref: ownedBy,
-                            top: implicitLabel
-                          }).name
-                      );
-                    } else if (explicitLabel) {
-                      // Check for blank value, since whitespace chars alone are not valid as a name
-                      name = trim(
+                    if (explicitLabel) {
+                      var eLblName = trim(
                         walk(explicitLabel, true, skip, [node], false, {
                           ref: ownedBy,
                           top: explicitLabel
                         }).name
                       );
-                    } else if (implicitLabel) {
-                      // Check for blank value, since whitespace chars alone are not valid as a name
-                      name = trim(
+                    }
+                    if (implicitLabel && implicitLabel !== explicitLabel) {
+                      var iLblName = trim(
                         walk(implicitLabel, true, skip, [node], false, {
                           ref: ownedBy,
                           top: implicitLabel
@@ -3499,10 +3612,27 @@ https://github.com/whatsock/w3c-alternative-text-computation
                       );
                     }
 
+                    if (iLblName && eLblName && isImplicitFirst) {
+                      name = iLblName + " " + eLblName;
+                    } else if (eLblName && iLblName) {
+                      name = eLblName + " " + iLblName;
+                    } else if (eLblName) {
+                      name = eLblName;
+                    } else if (iLblName) {
+                      name = iLblName;
+                    }
+
                     if (trim(name)) {
                       hasName = true;
                     }
                   }
+
+                  // Process native form field buttons in accordance with the HTML AAM
+                  // https://w3c.github.io/html-aam/#accessible-name-and-description-computation
+                  var btnType =
+                    (isNativeButton && node.getAttribute("type")) || false;
+                  var btnValue =
+                    (btnType && trim(node.getAttribute("value"))) || false;
 
                   var rolePresentation =
                     !hasName &&
@@ -3520,9 +3650,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   if (
                     !hasName &&
                     !rolePresentation &&
-                    (nTag === "img" ||
-                      (nTag === "input" &&
-                        node.getAttribute("type") === "image")) &&
+                    (nTag === "img" || btnType === "image") &&
                     nAlt
                   ) {
                     // Check for blank value, since whitespace chars alone are not valid as a name
@@ -3532,13 +3660,52 @@ https://github.com/whatsock/w3c-alternative-text-computation
                     }
                   }
 
-                  // Otherwise, if current node is non-presentational and includes a non-empty title attribute and is not a separate embedded form field, store title attribute value as the accessible name if name is still empty, or the description if not.
                   if (
+                    !hasName &&
+                    node === refNode &&
+                    btnType &&
+                    ["button", "image", "submit", "reset"].indexOf(btnType) !==
+                      -1
+                  ) {
+                    if (btnValue) {
+                      name = btnValue;
+                    } else {
+                      switch (btnType) {
+                        case "submit":
+                        case "image":
+                          name = "Submit Query";
+                          break;
+                        case "reset":
+                          name = "Reset";
+                          break;
+                        default:
+                          name = "";
+                      }
+                    }
+                    if (trim(name)) {
+                      hasName = true;
+                    }
+                  }
+
+                  if (
+                    hasName &&
+                    node === refNode &&
+                    btnType &&
+                    ["button", "submit", "reset"].indexOf(btnType) !== -1 &&
+                    btnValue &&
+                    btnValue !== name &&
+                    !result.desc
+                  ) {
+                    result.desc = btnValue;
+                  }
+
+                  // Otherwise, if current node is the same as rootNode and is non-presentational and includes a non-empty title attribute and is not a separate embedded form field, store title attribute value as the accessible name if name is still empty, or the description if not.
+                  if (
+                    node === rootNode &&
                     !rolePresentation &&
                     trim(nTitle) &&
                     !isSeparatChildFormField
                   ) {
-                    // Check for blank value, since whitespace chars alone are not valid as a name
                     result.title = trim(nTitle);
                   }
 
@@ -4054,7 +4221,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             if (!nOA || !nOA.length) {
               return "";
             }
-            let parts = [];
+            var parts = [];
             for (var i = 0; i < nOA.length; i++) {
               var role = getRole(nOA[i]);
               var isValidChildRole =
@@ -4210,6 +4377,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
             obj = this.currentObject;
           }
           var id = "AccDC" + now();
+          if (obj && typeof obj === "string") {
+            obj = $A._stringToNode(obj);
+            obj = $A._checkStoredNodes(obj, true);
+          }
           if (obj && obj.nodeType === 1) {
             obj.id = id;
             if (this.isClonedAccDCObject) {
@@ -4227,8 +4398,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             str = this.currentObject;
           }
           if (!str) return this.isClonedAccDCObject ? this : str;
-          var s = $A._checkStoredNodes(str);
-          if ($A.isArray(s)) s = s[0];
+          var s = $A._checkStoredNodes(str, true);
           announceString.apply(s, [s, noRepeat, aggr]);
           if (this.isClonedAccDCObject) {
             this.currentObject = str;
@@ -4249,26 +4419,36 @@ https://github.com/whatsock/w3c-alternative-text-computation
           } else return obj;
         },
 
+        isFocusWithin: function(o) {
+          if (this.isClonedAccDCObject) {
+            o = this.currentObject;
+          }
+          if (o && o.nodeType === 1 && o.appendChild) {
+            return $A.query("*:focus", o).length > 0;
+          }
+          return false;
+        },
+
         isFocusable: function(node, usingFocus) {
           if (this.isClonedAccDCObject) {
             usingFocus = node;
             node = this.currentObject;
           }
           var nodeName = node.nodeName.toLowerCase(),
-            tabI = parseInt(node.getAttribute("tabindex"), 10);
+            tabI = parseInt($A.getAttr(node, "tabindex"), 10);
           if (
             (usingFocus && typeof tabI === "number") ||
             (!usingFocus && typeof tabI === "number" && tabI >= 0)
           ) {
             return true;
           }
-          if (nodeName === "a" && node.getAttribute("href")) {
+          if (nodeName === "a" && $A.getAttr(node, "href")) {
             return true;
           }
           if (
             ["button", "input", "select", "textarea"].indexOf(nodeName) !==
               -1 &&
-            node.getAttribute("type") !== "hidden"
+            $A.getAttr(node, "type") !== "hidden"
           ) {
             return true;
           }
@@ -4285,20 +4465,23 @@ https://github.com/whatsock/w3c-alternative-text-computation
       });
 
       $A.extend({
-        // Long-hand method names for alternative usage
+        // Variable method names for alternative usage
         getElement: $A["getEl"],
         createElement: $A["createEl"],
         getAttribute: $A["getAttr"],
         removeAttribute: $A["remAttr"],
         setAttribute: $A["setAttr"],
         previousSibling: $A["prevSibling"],
+        previous: $A["prevSibling"],
+        next: $A["nextSibling"],
+        first: $A["firstChild"],
+        last: $A["lastChild"],
+        parent: $A["closestParent"],
         removeClass: $A["remClass"],
         getOffset: $A["_offset"],
         addIdReference: $A["addIdRef"],
         removeIdReference: $A["remIdRef"],
         generateId: $A["genId"],
-        offscreenStyle: $A["sraCSS"],
-        clearOffscreenStyle: $A["sraCSSClear"],
         toTextNode: $A["createText"],
 
         // Deprecated but here for backwards compadibility
@@ -4307,10 +4490,10 @@ https://github.com/whatsock/w3c-alternative-text-computation
       });
 
       (function(global) {
-        let counter = 0;
-        let scriptMap = new Map();
+        var counter = 0;
+        var scriptMap = new Map();
         $A.ScriptCache = function(config) {
-          let scripts = new Map();
+          var scripts = new Map();
           $A.loop(
             config.scripts,
             function(i, url) {
@@ -4322,7 +4505,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
           Cache._onLoad = function(key) {
             return cb => {
-              let stored = scriptMap.get(key);
+              var stored = scriptMap.get(key);
               if (stored) {
                 stored.promise.then(() => {
                   stored.error ? cb(stored.error) : cb(null, stored);
@@ -4334,16 +4517,16 @@ https://github.com/whatsock/w3c-alternative-text-computation
 
           Cache._scriptTag = (key, src) => {
             if (!scriptMap.has(key)) {
-              let tag = $A.createEl(config.tag);
+              var tag = $A.createEl(config.tag);
 
-              let promise = new Promise((resolve, reject) => {
+              var promise = new Promise((resolve, reject) => {
                 tag.async = config.async || false; // Default: Load in order
                 const cbName = `loaderCB${counter++}${Date.now()}`;
-                let cb;
+                var cb;
 
-                let handleResult = state => {
+                var handleResult = state => {
                   return evt => {
-                    let stored = scriptMap.get(key);
+                    var stored = scriptMap.get(key);
                     if (state === "loaded") {
                       stored.resolved = true;
                       resolve(src);
@@ -4398,7 +4581,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 );
                 return tag;
               });
-              let initialState = {
+              var initialState = {
                 loaded: false,
                 error: false,
                 promise: promise,
@@ -4436,60 +4619,76 @@ https://github.com/whatsock/w3c-alternative-text-computation
           str = $A.getText(str);
         }
         if (str && typeof str === "string") {
-          if (stringAnnounce.loaded) {
-            if (
-              !stringAnnounce.liveRendered &&
-              !aggr &&
-              stringAnnounce.placeHolder
-            ) {
-              stringAnnounce.liveRendered = true;
-              document.body.appendChild(stringAnnounce.placeHolder);
+          var uA = function() {
+            if (stringAnnounce.loaded) {
+              if (
+                !stringAnnounce.liveRendered &&
+                !aggr &&
+                stringAnnounce.placeHolder
+              ) {
+                stringAnnounce.liveRendered = true;
+                document.body.appendChild(stringAnnounce.placeHolder);
+              }
+              if (
+                !stringAnnounce.alertRendered &&
+                aggr &&
+                stringAnnounce.placeHolder2
+              ) {
+                stringAnnounce.alertRendered = true;
+                document.body.appendChild(stringAnnounce.placeHolder2);
+              }
             }
-            if (
-              !stringAnnounce.alertRendered &&
-              aggr &&
-              stringAnnounce.placeHolder2
-            ) {
-              stringAnnounce.alertRendered = true;
-              document.body.appendChild(stringAnnounce.placeHolder2);
-            }
-          }
-          if (!loop && $A.inArray(str, stringAnnounce.alertMsgs) === -1)
-            stringAnnounce.alertMsgs.push(str);
-          if (stringAnnounce.alertMsgs.length === 1 || loop) {
-            var timeLength =
-              stringAnnounce.baseDelay +
-              stringAnnounce.iterate(
-                stringAnnounce.alertMsgs[0],
-                /\s|,|\.|:|;|!|\(|\)|\/|\?|@|#|\$|%|\^|&|\*|\\|-|_|\+|=/g
-              ) *
-                stringAnnounce.charMultiplier;
-            if (
-              !(noRep && stringAnnounce.lastMsg === stringAnnounce.alertMsgs[0])
-            ) {
-              stringAnnounce.lastMsg = stringAnnounce.alertMsgs[0];
-              if (aggr)
-                $A.insertMarkup(
+            if (!loop && $A.inArray(str, stringAnnounce.alertMsgs) === -1)
+              stringAnnounce.alertMsgs.push(str);
+            if (stringAnnounce.alertMsgs.length === 1 || loop) {
+              var timeLength =
+                stringAnnounce.baseDelay +
+                stringAnnounce.iterate(
                   stringAnnounce.alertMsgs[0],
-                  stringAnnounce.placeHolder2
-                );
-              else
-                $A.insertMarkup(
-                  stringAnnounce.alertMsgs[0],
-                  stringAnnounce.placeHolder
-                );
+                  /\s|,|\.|:|;|!|\(|\)|\/|\?|@|#|\$|%|\^|&|\*|\\|-|_|\+|=/g
+                ) *
+                  stringAnnounce.charMultiplier;
+              if (
+                !(
+                  noRep &&
+                  stringAnnounce.lastMsg === stringAnnounce.alertMsgs[0]
+                )
+              ) {
+                stringAnnounce.lastMsg = stringAnnounce.alertMsgs[0];
+                if (aggr)
+                  $A.insertHTML(
+                    stringAnnounce.alertMsgs[0],
+                    stringAnnounce.placeHolder2
+                  );
+                else
+                  $A.insertHTML(
+                    stringAnnounce.alertMsgs[0],
+                    stringAnnounce.placeHolder
+                  );
+              }
+              stringAnnounce.alertTO = setTimeout(function() {
+                $A.insertHTML("", stringAnnounce.placeHolder);
+                $A.insertHTML("", stringAnnounce.placeHolder2);
+                stringAnnounce.alertMsgs.shift();
+                if (stringAnnounce.alertMsgs.length >= 1)
+                  announceString(
+                    stringAnnounce.alertMsgs[0],
+                    noRep,
+                    aggr,
+                    true
+                  );
+              }, timeLength);
             }
-            stringAnnounce.alertTO = setTimeout(function() {
-              $A.insertMarkup("", stringAnnounce.placeHolder);
-              $A.insertMarkup("", stringAnnounce.placeHolder2);
-              stringAnnounce.alertMsgs.shift();
-              if (stringAnnounce.alertMsgs.length >= 1)
-                announceString(stringAnnounce.alertMsgs[0], noRep, aggr, true);
-            }, timeLength);
-          }
+          };
+          if (!$A.documentLoaded)
+            window.addEventListener("load", function() {
+              uA();
+            });
+          else uA();
         }
         return strm;
       };
+
       String.prototype.announce = announceString;
 
       var stringAnnounce = {
@@ -4559,41 +4758,91 @@ https://github.com/whatsock/w3c-alternative-text-computation
           changeTabs = function(DC, isClose) {
             var dc = wheel[DC.indexVal];
             if ((dc.isTab || dc.isToggle) && dc.toggleClassName) {
-              $A.query(dc.trigger, function() {
-                if (this !== dc.triggerObj) {
-                  $A.remClass(wl.triggerObj, dc.toggleClassName);
-                }
-              });
-            }
-            var w = 0,
-              wl = null;
-            if (dc.isTab) {
-              if (dc.toggleClassName) {
-                for (w = 0; w < dc.siblings.length; w++) {
-                  wl = dc.siblings[w];
-                  if (wl.isTab) {
-                    $A.toggleClass(
-                      wl.triggerObj,
-                      dc.toggleClassName,
-                      wl.loaded
-                    );
-                  }
-                }
-              }
-            } else if (dc.isToggle) {
-              if (dc.toggleClassName) {
-                for (w = 0; w < dc.siblings.length; w++) {
-                  wl = dc.siblings[w];
-                  if (wl.isToggle) {
-                    $A.toggleClass(
-                      wl.triggerObj,
-                      dc.toggleClassName,
-                      wl.loaded
-                    );
-                  }
-                }
+              if (isClose && (dc.trigger || dc.triggerObj)) {
+                $A.query(dc.trigger || dc.triggerObj, function(i, o) {
+                  $A.remClass(o, dc.toggleClassName);
+                });
+              } else if (dc.trigger || dc.triggerObj) {
+                $A.query(dc.trigger || dc.triggerObj, function(i, o) {
+                  $A.toggleClass(
+                    o,
+                    dc.toggleClassName,
+                    this === dc.triggerObj ? dc.loaded : false
+                  );
+                });
               }
             }
+            return dc;
+          },
+          parseScripts = function(DC, type) {
+            var dc = wheel[DC.indexVal],
+              ranJSOnce = "ranJSOnce" + type,
+              runJSOnce = "runJSOnce" + type,
+              runOnce = "runOnce" + type,
+              runJS = "runJS" + type,
+              run = "run" + type;
+            if (!dc[ranJSOnce]) {
+              dc[ranJSOnce] = true;
+              if (dc.reverseJSOrder) {
+                dc[runOnce].apply(dc, [dc]);
+                if (dc.allowCascade) {
+                  if (dc.fn.proto[runOnce])
+                    dc.fn.proto[runOnce].apply(dc, [dc]);
+                  if ($A.fn.globalDC[runOnce])
+                    $A.fn.globalDC[runOnce].apply(dc, [dc]);
+                }
+                dc.reverseJSOrderPass = true;
+              }
+              if (dc[runJSOnce].length) {
+                getScript(dc, dc[runJSOnce]);
+              }
+              if (dc.allowCascade) {
+                if (dc.fn.proto[runJSOnce] && dc.fn.proto[runJSOnce].length) {
+                  getScript(dc, dc.fn.proto[runJSOnce]);
+                }
+                if (
+                  $A.fn.globalDC[runJSOnce] &&
+                  $A.fn.globalDC[runJSOnce].length
+                ) {
+                  getScript(dc, $A.fn.globalDC[runJSOnce]);
+                }
+              }
+              if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
+                dc[runOnce].apply(dc, [dc]);
+                if (dc.allowCascade) {
+                  if (dc.fn.proto[runOnce])
+                    dc.fn.proto[runOnce].apply(dc, [dc]);
+                  if ($A.fn.globalDC[runOnce])
+                    $A.fn.globalDC[runOnce].apply(dc, [dc]);
+                }
+              } else dc.reverseJSOrderPass = false;
+            }
+            if (dc.reverseJSOrder) {
+              dc[run].apply(dc, [dc]);
+              if (dc.allowCascade) {
+                if (dc.fn.proto[run]) dc.fn.proto[run].apply(dc, [dc]);
+                if ($A.fn.globalDC[run]) $A.fn.globalDC[run].apply(dc, [dc]);
+              }
+              dc.reverseJSOrderPass = true;
+            }
+            if (dc[runJS].length) {
+              getScript(dc, dc[runJS]);
+            }
+            if (dc.allowCascade) {
+              if (dc.fn.proto[runJS] && dc.fn.proto[runJS].length) {
+                getScript(dc, dc.fn.proto[runJS]);
+              }
+              if ($A.fn.globalDC[runJS] && $A.fn.globalDC[runJS].length) {
+                getScript(dc, $A.fn.globalDC[runJS]);
+              }
+            }
+            if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
+              dc[run].apply(dc, [dc]);
+              if (dc.allowCascade) {
+                if (dc.fn.proto[run]) dc.fn.proto[run].apply(dc, [dc]);
+                if ($A.fn.globalDC[run]) $A.fn.globalDC[run].apply(dc, [dc]);
+              }
+            } else dc.reverseJSOrderPass = false;
             return dc;
           },
           loadAccDCObj = function(DC) {
@@ -4646,16 +4895,17 @@ https://github.com/whatsock/w3c-alternative-text-computation
               }
             }
             dc.cancel = false;
-            dc.content = "";
-            dc.outerNodeId = dc.fn.outerNodeId = $A.genId();
-            dc.closeId = dc.outerNodeId + "CL";
-            dc.containerId = dc.containerDivId = dc.outerNodeId + "CO";
-            dc.fn.sraStartId = dc.outerNodeId + "ST";
-            dc.fn.sraEndId = dc.outerNodeId + "EN";
+
+            dc.fn.baseId = $A.genId();
+            dc.outerNodeId = dc.fn.baseId;
+            dc.closeId = dc.fn.baseId + "CL";
+            dc.sraStartId = dc.fn.baseId + "ST";
+            dc.containerId = dc.fn.baseId + "CO";
+
             dc.fn.sraStart = $A.createEl(
               "div",
               {
-                id: dc.fn.sraStartId,
+                id: dc.sraStartId,
                 tabindex: -1,
                 // Sets the Description property so that screen readers are likely to announce the main container when focus is first set, however this requires a valid role be present
                 "aria-describedby": dc.containerId,
@@ -4665,188 +4915,57 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 "outline-style": "none"
               }
             );
-            $A.css(dc.fn.sraStart, $A.sraCSS);
-            dc.fn.sraEnd = $A.createEl(
-              "div",
-              {
-                id: dc.fn.sraEndId
-              },
-              $A.sraCSS
-            );
-            dc.container = dc.containerDiv = $A.createEl("div", {
-              id: dc.containerId
-            });
+            $A.setOffScreen(dc.fn.sraStart);
             dc.fn.closeLink = $A.createEl(
               "a",
               {
                 id: dc.closeId,
                 href: "#close"
               },
-              dc.sraCSS,
+              $A.sraCSS,
               dc.closeClassName
             );
-            dc.outerNode = dc.accDCObj = $A.createEl("div", {
-              id: dc.fn.outerNodeId
-            });
-            if (dc.className) $A.addClass(dc.outerNode, dc.className);
-            if (dc.forceFocus) $A.append(dc.fn.sraStart, dc.outerNode);
-            $A.append(dc.container, dc.outerNode);
-            if (dc.exposeHiddenClose) $A.append(dc.fn.closeLink, dc.outerNode);
-            var events = {
-                mouseOver: function(ev) {
-                  dc.mouseOver.apply(this, [ev, dc]);
-                },
-                mouseOut: function(ev) {
-                  dc.mouseOut.apply(this, [ev, dc]);
-                },
-                resize: function(ev) {
-                  dc.resize.apply(this, [ev, dc]);
-                },
-                scroll: function(ev) {
-                  dc.scroll.apply(this, [ev, dc]);
-                },
-                click: function(ev) {
-                  dc.click.apply(this, [ev, dc]);
-                },
-                dblClick: function(ev) {
-                  dc.dblClick.apply(this, [ev, dc]);
-                },
-                mouseDown: function(ev) {
-                  dc.mouseDown.apply(this, [ev, dc]);
-                },
-                mouseUp: function(ev) {
-                  dc.mouseUp.apply(this, [ev, dc]);
-                },
-                mouseMove: function(ev) {
-                  dc.mouseMove.apply(this, [ev, dc]);
-                },
-                mouseEnter: function(ev) {
-                  dc.mouseEnter.apply(this, [ev, dc]);
-                },
-                mouseLeave: function(ev) {
-                  dc.mouseLeave.apply(this, [ev, dc]);
-                },
-                keyDown: function(ev) {
-                  dc.keyDown.apply(this, [ev, dc]);
-                },
-                keyPress: function(ev) {
-                  dc.keyPress.apply(this, [ev, dc]);
-                },
-                keyUp: function(ev) {
-                  dc.keyUp.apply(this, [ev, dc]);
-                },
-                error: function(ev) {
-                  dc.error.apply(this, [ev, dc]);
-                },
-                focusIn: function(ev) {
-                  dc.focusIn.apply(this, [ev, dc]);
-                },
-                focusOut: function(ev) {
-                  dc.focusOut.apply(this, [ev, dc]);
-                }
-              },
-              toBind = {};
-            for (var ev in events) {
-              if (dc[ev] && typeof dc[ev] === "function")
-                toBind[ev.toLowerCase()] = events[ev];
+
+            if (!dc.sourceOnly) {
+              dc.container = $A.createEl("div", {
+                id: dc.containerId
+              });
+              dc.outerNode = dc.accDCObj = $A.createEl("div", {
+                id: dc.outerNodeId
+              });
+              dc.outerNode.appendChild(dc.container);
             }
-            $A.on(dc.outerNode, toBind);
-            if (!dc.ranJSOnceBefore) {
-              dc.ranJSOnceBefore = true;
-              if (dc.reverseJSOrder) {
-                dc.runOnceBefore.apply(dc, [dc]);
-                if (dc.allowCascade) {
-                  if (dc.fn.proto.runOnceBefore)
-                    dc.fn.proto.runOnceBefore.apply(dc, [dc]);
-                  if ($A.fn.globalDC.runOnceBefore)
-                    $A.fn.globalDC.runOnceBefore.apply(dc, [dc]);
-                }
-                dc.reverseJSOrderPass = true;
-              }
-              if (dc.runJSOnceBefore.length) {
-                getScript(dc, dc.runJSOnceBefore);
-              }
-              if (dc.allowCascade) {
-                if (
-                  dc.fn.proto.runJSOnceBefore &&
-                  dc.fn.proto.runJSOnceBefore.length
-                ) {
-                  getScript(dc, dc.fn.proto.runJSOnceBefore);
-                }
-                if (
-                  $A.fn.globalDC.runJSOnceBefore &&
-                  $A.fn.globalDC.runJSOnceBefore.length
-                ) {
-                  getScript(dc, $A.fn.globalDC.runJSOnceBefore);
-                }
-              }
-              if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
-                dc.runOnceBefore.apply(dc, [dc]);
-                if (dc.allowCascade) {
-                  if (dc.fn.proto.runOnceBefore)
-                    dc.fn.proto.runOnceBefore.apply(dc, [dc]);
-                  if ($A.fn.globalDC.runOnceBefore)
-                    $A.fn.globalDC.runOnceBefore.apply(dc, [dc]);
-                }
-              } else dc.reverseJSOrderPass = false;
-            }
-            if (dc.reverseJSOrder) {
-              dc.runBefore.apply(dc, [dc]);
-              if (dc.allowCascade) {
-                if (dc.fn.proto.runBefore)
-                  dc.fn.proto.runBefore.apply(dc, [dc]);
-                if ($A.fn.globalDC.runBefore)
-                  $A.fn.globalDC.runBefore.apply(dc, [dc]);
-              }
-              dc.reverseJSOrderPass = true;
-            }
-            if (dc.runJSBefore.length) {
-              getScript(dc, dc.runJSBefore);
-            }
-            if (dc.allowCascade) {
-              if (dc.fn.proto.runJSBefore && dc.fn.proto.runJSBefore.length) {
-                getScript(dc, dc.fn.proto.runJSBefore);
-              }
-              if (
-                $A.fn.globalDC.runJSBefore &&
-                $A.fn.globalDC.runJSBefore.length
-              ) {
-                getScript(dc, $A.fn.globalDC.runJSBefore);
-              }
-            }
-            if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
-              dc.runBefore.apply(dc, [dc]);
-              if (dc.allowCascade) {
-                if (dc.fn.proto.runBefore)
-                  dc.fn.proto.runBefore.apply(dc, [dc]);
-                if ($A.fn.globalDC.runBefore)
-                  $A.fn.globalDC.runBefore.apply(dc, [dc]);
-              }
-            } else dc.reverseJSOrderPass = false;
+
+            parseScripts(dc, "Before");
+
             if (dc.cancel) {
               dc.cancel = dc.loading = false;
               return dc;
             }
+
             dc.loading = true;
+
             if (
               ReactDOM &&
               ReactHtmlParser &&
               dc.source &&
-              dc.RenderUsingReact
+              dc.RenderUsingReact &&
+              !dc.mode
             ) {
-              var rC = ReactHtmlParser(dc.source);
+              var rC = $A.toReact(dc.source);
               if (rC) {
                 dc.React.component = rC;
-                dc.source = "";
+                if (!$A._isMorphedDC(dc)) dc.source = "";
               }
             }
+
             if (ReactDOM && dc.React.component) {
               parseRemaining(dc);
             } else {
               switch (dc.mode) {
                 case 1:
                   $A.load(
-                    dc.fetch.url,
+                    dc.source || dc.fetch.url,
                     dc.container,
                     dc.fetch.data,
                     function(content, promise) {
@@ -4860,10 +4979,18 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   break;
                 case 2:
                   $A.get({
-                    url: dc.fetch.url,
+                    url: dc.source || dc.fetch.url,
                     data: dc.fetch.data,
                     success: function(content, promise) {
                       dc.fetch.success(content, promise, dc);
+                      if (dc.sourceOnly) {
+                        dc.outerNode = dc.container = $A.toNode(
+                          dc.content,
+                          true
+                        );
+                      } else {
+                        $A.insert(dc.content, dc.container);
+                      }
                       parseRemaining(dc);
                     },
                     error: function(errorMsg, promise) {
@@ -4872,14 +4999,39 @@ https://github.com/whatsock/w3c-alternative-text-computation
                   });
                   break;
                 default:
-                  dc.load(dc);
-                  parseRemaining(dc);
+                  if (!$A._isMorphedDC(dc)) {
+                    if (dc.sourceOnly) {
+                      dc.outerNode = dc.container = $A.toNode(dc.source, true);
+                      parseRemaining(dc);
+                    } else {
+                      $A.insert(dc.source, dc.container, function() {
+                        parseRemaining(dc);
+                      });
+                    }
+                  } else {
+                    parseRemaining(dc);
+                  }
               }
             }
+
             return dc;
           },
           parseRemaining = function(DC) {
             var dc = wheel[DC.indexVal];
+
+            if (dc.outerNode && dc.container) {
+              if (dc.exposeBounds) {
+                dc.setAttr({
+                  role: "region",
+                  "aria-label": dc.role
+                });
+              }
+              if (dc.displayInline)
+                $A.css([dc.outerNode, dc.container], "display", "inline");
+              if (dc.cssObj) $A.css(dc.outerNode, dc.cssObj);
+              if (dc.autoFix) setAutoFix(dc);
+            }
+
             dc.runDuring.apply(dc, [dc]);
             if (dc.allowCascade) {
               if (dc.fn.proto.runDuring) dc.fn.proto.runDuring.apply(dc, [dc]);
@@ -4890,6 +5042,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
               dc.cancel = dc.loading = false;
               return dc;
             }
+
             for (var w = 0; w < dc.siblings.length; w++) {
               var sb = dc.siblings[w];
               if (sb.loaded && !sb.allowMultiple) {
@@ -4898,74 +5051,164 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 sb.fn.bypass = false;
               }
             }
-            if (dc.exposeHiddenClose) {
-              $A.insertMarkup(dc.hiddenCloseName, dc.fn.closeLink);
-              $A.on(dc.fn.closeLink, {
-                click: function(ev) {
-                  dc.close();
-                  ev.preventDefault();
-                  ev.stopPropagation();
+
+            if (dc.outerNode && dc.container) {
+              if ($A._isMorphedDC(dc)) {
+                dc.fn.isMorphedAccDCObject = false;
+                if (
+                  dc.source &&
+                  dc.source.nodeType === 1 &&
+                  dc.source.parentNode &&
+                  dc.source.parentNode.nodeType === 1 &&
+                  !dc.root &&
+                  !dc.triggerObj &&
+                  !dc.targetObj
+                ) {
+                  dc.before = dc.prepend = dc.append = dc.after = false;
+                  if ($A.next(dc.source)) {
+                    dc.root = $A.next(dc.source);
+                    dc.before = true;
+                  } else if ($A.previous(dc.source)) {
+                    dc.root = $A.previous(dc.source);
+                    dc.after = true;
+                  } else if (dc.source.parentNode) {
+                    dc.root = dc.source.parentNode;
+                  }
+                  $A.before(dc.outerNode, dc.source);
+                  if (dc.React.component) {
+                    $A.remove(dc.source);
+                    dc.source = "";
+                  } else {
+                    $A.insert(dc.source, dc.container);
+                    dc.source = dc.container.innerHTML;
+                  }
                 }
-              });
-              if (dc.displayHiddenClose)
-                $A.on(dc.fn.closeLink, {
-                  focus: function(ev) {
-                    var disableC = dc.tabOut(ev, dc) ? true : false;
-                    if (!disableC) {
-                      $A.css(this, $A.sraCSSClear);
+              } else if (dc.root) {
+                if ($A.isChain(dc.root)) dc.root = dc.root.return();
+
+                if (dc.before) {
+                  if (typeof dc.before === "function")
+                    dc.before.apply(dc, [dc.outerNode, dc.root]);
+                  else $A.before(dc.outerNode, dc.root);
+                } else if (dc.prepend) {
+                  if (typeof dc.prepend === "function")
+                    dc.prepend.apply(dc, [dc.outerNode, dc.root]);
+                  else {
+                    try {
+                      $A.prepend(dc.outerNode, dc.root);
+                    } catch (e) {
+                      $A.before(dc.outerNode, dc.root);
                     }
-                  },
-                  blur: function(ev) {
-                    $A.css(this, dc.sraCSS);
+                  }
+                } else if (dc.append) {
+                  if (typeof dc.append === "function")
+                    dc.append.apply(dc, [dc.outerNode, dc.root]);
+                  else {
+                    try {
+                      $A.append(dc.outerNode, dc.root);
+                    } catch (e) {
+                      $A.after(dc.outerNode, dc.root);
+                    }
+                  }
+                } else if (dc.after) {
+                  if (typeof dc.after === "function")
+                    dc.after.apply(dc, [dc.outerNode, dc.root]);
+                  else $A.after(dc.outerNode, dc.root);
+                } else {
+                  $A.insert(dc.outerNode, dc.root);
+                }
+              } else if (dc.targetObj)
+                $A._insertAfter(dc.outerNode, dc.targetObj);
+              else if (dc.triggerObj)
+                $A._insertAfter(dc.outerNode, dc.triggerObj);
+            }
+
+            var complete = function() {
+              if (dc.className) dc.addClass(dc.className);
+              if (dc.forceFocus) $A.prepend(dc.fn.sraStart, dc.outerNode);
+              if (dc.exposeHiddenClose) {
+                $A.insertHTML(dc.hiddenCloseName, dc.fn.closeLink);
+                $A.on(dc.fn.closeLink, {
+                  click: function(ev) {
+                    dc.close();
+                    ev.preventDefault();
+                    ev.stopPropagation();
                   }
                 });
-              else $A.setAttr(dc.fn.closeLink, "tabindex", "-1");
-            }
-            if (dc.exposeBounds) {
-              $A.setAttr(dc.outerNode, {
-                role: "region",
-                "aria-label": dc.role
-              });
-            }
-            if (dc.displayInline)
-              $A.css([dc.outerNode, dc.container], "display", "inline");
-            if (dc.cssObj) $A.css(dc.outerNode, dc.cssObj);
-            if (dc.autoFix) setAutoFix(dc);
-            if (dc.root) {
-              if (dc.before) {
-                if (typeof dc.before === "function")
-                  dc.before.apply(dc, [dc.outerNode, dc.root]);
-                else $A.before(dc.outerNode, dc.root);
-              } else if (dc.prepend) {
-                if (typeof dc.prepend === "function")
-                  dc.prepend.apply(dc, [dc.outerNode, dc.root]);
-                else {
-                  try {
-                    $A.prepend(dc.outerNode, dc.root);
-                  } catch (e) {
-                    $A.before(dc.outerNode, dc.root);
+                if (dc.displayHiddenClose)
+                  $A.on(dc.fn.closeLink, {
+                    focus: function(ev) {
+                      var disableC = dc.tabOut(ev, dc) ? true : false;
+                      if (!disableC) {
+                        $A.clearOffScreen(this);
+                      }
+                    },
+                    blur: function(ev) {
+                      $A.setOffScreen(this);
+                    }
+                  });
+                else $A.setAttr(dc.fn.closeLink, "tabindex", "-1");
+                dc.outerNode.appendChild(dc.fn.closeLink);
+              }
+              var events = {
+                  mouseOver: function(ev) {
+                    dc.mouseOver.apply(this, [ev, dc]);
+                  },
+                  mouseOut: function(ev) {
+                    dc.mouseOut.apply(this, [ev, dc]);
+                  },
+                  resize: function(ev) {
+                    dc.resize.apply(this, [ev, dc]);
+                  },
+                  scroll: function(ev) {
+                    dc.scroll.apply(this, [ev, dc]);
+                  },
+                  click: function(ev) {
+                    dc.click.apply(this, [ev, dc]);
+                  },
+                  dblClick: function(ev) {
+                    dc.dblClick.apply(this, [ev, dc]);
+                  },
+                  mouseDown: function(ev) {
+                    dc.mouseDown.apply(this, [ev, dc]);
+                  },
+                  mouseUp: function(ev) {
+                    dc.mouseUp.apply(this, [ev, dc]);
+                  },
+                  mouseMove: function(ev) {
+                    dc.mouseMove.apply(this, [ev, dc]);
+                  },
+                  mouseEnter: function(ev) {
+                    dc.mouseEnter.apply(this, [ev, dc]);
+                  },
+                  mouseLeave: function(ev) {
+                    dc.mouseLeave.apply(this, [ev, dc]);
+                  },
+                  keyDown: function(ev) {
+                    dc.keyDown.apply(this, [ev, dc]);
+                  },
+                  keyPress: function(ev) {
+                    dc.keyPress.apply(this, [ev, dc]);
+                  },
+                  keyUp: function(ev) {
+                    dc.keyUp.apply(this, [ev, dc]);
+                  },
+                  error: function(ev) {
+                    dc.error.apply(this, [ev, dc]);
+                  },
+                  focusIn: function(ev) {
+                    dc.focusIn.apply(this, [ev, dc]);
+                  },
+                  focusOut: function(ev) {
+                    dc.focusOut.apply(this, [ev, dc]);
                   }
-                }
-              } else if (dc.append) {
-                if (typeof dc.append === "function")
-                  dc.append.apply(dc, [dc.outerNode, dc.root]);
-                else {
-                  try {
-                    $A.append(dc.outerNode, dc.root);
-                  } catch (e) {
-                    $A.after(dc.outerNode, dc.root);
-                  }
-                }
-              } else if (dc.after) {
-                if (typeof dc.after === "function")
-                  dc.after.apply(dc, [dc.outerNode, dc.root]);
-                else $A.after(dc.outerNode, dc.root);
-              } else $A.insert(dc.outerNode, dc.root);
-            } else if (dc.targetObj)
-              $A._insertAfter(dc.outerNode, dc.targetObj);
-            else if (dc.triggerObj)
-              $A._insertAfter(dc.outerNode, dc.triggerObj);
-            var complete = function() {
+                },
+                toBind = {};
+              for (var ev in events) {
+                if (dc[ev] && typeof dc[ev] === "function")
+                  toBind[ev.toLowerCase()] = events[ev];
+              }
+              $A.on(dc.outerNode, toBind);
               if (dc.importCSS) {
                 getScript(dc, dc.importCSS, null, true);
               }
@@ -4980,86 +5223,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 dc.timer = setTimeout(function() {
                   dc.timeout(dc);
                 }, dc.timeoutVal);
-              if (dc.dropTarget && dc.accDD.on) {
-                dc.accDD.dropTargets = [];
-                dc.accDD.dropAnchors = [];
-                $A.query(dc.dropTarget, function() {
-                  dc.accDD.dropAnchors.push(this);
-                  dc.accDD.dropTargets.push(this);
-                });
-              }
-              if (!dc.ranJSOnceAfter) {
-                dc.ranJSOnceAfter = true;
-                if (dc.reverseJSOrder) {
-                  dc.runOnceAfter.apply(dc, [dc]);
-                  if (dc.allowCascade) {
-                    if (dc.fn.proto.runOnceAfter)
-                      dc.fn.proto.runOnceAfter.apply(dc, [dc]);
-                    if ($A.fn.globalDC.runOnceAfter)
-                      $A.fn.globalDC.runOnceAfter.apply(dc, [dc]);
-                  }
-                  dc.reverseJSOrderPass = true;
-                }
-                if (dc.runJSOnceAfter.length) {
-                  getScript(dc, dc.runJSOnceAfter);
-                }
-                if (dc.allowCascade) {
-                  if (
-                    dc.fn.proto.runJSOnceAfter &&
-                    dc.fn.proto.runJSOnceAfter.length
-                  ) {
-                    getScript(dc, dc.fn.proto.runJSOnceAfter);
-                  }
-                  if (
-                    $A.fn.globalDC.runJSOnceAfter &&
-                    $A.fn.globalDC.runJSOnceAfter.length
-                  ) {
-                    getScript(dc, $A.fn.globalDC.runJSOnceAfter);
-                  }
-                }
-                if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
-                  dc.runOnceAfter.apply(dc, [dc]);
-                  if (dc.allowCascade) {
-                    if (dc.fn.proto.runOnceAfter)
-                      dc.fn.proto.runOnceAfter.apply(dc, [dc]);
-                    if ($A.fn.globalDC.runOnceAfter)
-                      $A.fn.globalDC.runOnceAfter.apply(dc, [dc]);
-                  }
-                } else dc.reverseJSOrderPass = false;
-              }
-              if (dc.reverseJSOrder) {
-                dc.runAfter.apply(dc, [dc]);
-                if (dc.allowCascade) {
-                  if (dc.fn.proto.runAfter)
-                    dc.fn.proto.runAfter.apply(dc, [dc]);
-                  if ($A.fn.globalDC.runAfter)
-                    $A.fn.globalDC.runAfter.apply(dc, [dc]);
-                }
-                dc.reverseJSOrderPass = true;
-              }
-              if (dc.runJSAfter.length) {
-                getScript(dc, dc.runJSAfter);
-              }
-              if (dc.allowCascade) {
-                if (dc.fn.proto.runJSAfter && dc.fn.proto.runJSAfter.length) {
-                  getScript(dc, dc.fn.proto.runJSAfter);
-                }
-                if (
-                  $A.fn.globalDC.runJSAfter &&
-                  $A.fn.globalDC.runJSAfter.length
-                ) {
-                  getScript(dc, $A.fn.globalDC.runJSAfter);
-                }
-              }
-              if (!dc.reverseJSOrder && !dc.reverseJSOrderPass) {
-                dc.runAfter.apply(dc, [dc]);
-                if (dc.allowCascade) {
-                  if (dc.fn.proto.runAfter)
-                    dc.fn.proto.runAfter.apply(dc, [dc]);
-                  if ($A.fn.globalDC.runAfter)
-                    $A.fn.globalDC.runAfter.apply(dc, [dc]);
-                }
-              } else dc.reverseJSOrderPass = false;
+              parseScripts(dc, "After");
               if (dc.autoFix) sizeAutoFix(dc);
               if (forceFocus) $A._setFocus(dc.fn.sraStart);
               if ($A.bootstrap) $A.bootstrap(dc.container);
@@ -5072,6 +5236,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 dc.React.component.forceUpdate();
               }
             };
+
             $A.lastLoaded = dc;
             if (ReactDOM && dc.React.component) {
               ReactDOM.render(dc.React.component, dc.container, function() {
@@ -5221,7 +5386,6 @@ https://github.com/whatsock/w3c-alternative-text-computation
               dc.offsetLeft > 0
             ) {
               var cs = $A._offset(dc.outerNode);
-              // BG:3.4:11/15/2017
               cs.top += dc.offsetTop;
               cs.left += dc.offsetLeft;
               $A.css(dc.outerNode, cs);
@@ -5230,23 +5394,20 @@ https://github.com/whatsock/w3c-alternative-text-computation
           },
           setBindings = function(dc) {
             dc.fn.toggleFocus = dc.fn.containsFocus = false;
+            dc.trigger = dc.trigger || dc.triggerObj;
             dc.fn.trigger = dc.trigger;
             dc.fn.bind = dc.on;
             var cFocus = {},
               isOnClick = false;
             if (dc.on && typeof dc.on === "string") {
-              let cF = dc.on.split(/\s+/);
+              var cF = dc.on.split(/\s+/);
               for (var i = 0; i < cF.length; i++) cFocus[cF[i]] = i;
             }
             $A.loop(
               cFocus,
               function(k, v) {
                 if ($A.inArray("focus", k) === 0) dc.fn.containsFocus = true;
-                else if (
-                  $A.inArray("click", k) === 0 ||
-                  $A.inArray("dblclick", k) === 0
-                )
-                  isOnClick = true;
+                else if ($A.inArray("click", k) >= 0) isOnClick = true;
               },
               "object"
             );
@@ -5254,55 +5415,50 @@ https://github.com/whatsock/w3c-alternative-text-computation
               $A.data(dc.id, "DC", dc);
               $A.data(dc.id, "DC-ON", true);
             }
-            if (dc.triggerObj) {
-              if (!$A.data(dc.triggerObj, "DC-ON")) {
-                $A.data(dc.triggerObj, "DC", dc);
-                $A.data(dc.triggerObj, "DC-ON", true);
-              }
-            }
-            $A.query(dc.trigger, function(i, o) {
-              if (!$A.data(o, "DC-ON")) {
-                $A.data(o, "DC", dc);
-                $A.data(o, "DC-ON", true);
-              }
-              if (dc.on && typeof dc.on === "string") {
-                if (
-                  !dc.suppressClickSupport &&
-                  isOnClick &&
-                  !$A.isFocusable(o)
-                ) {
-                  $A.setAttr(o, "tabindex", 0);
-                  $A.on(o, {
-                    keydown: function(ev) {
-                      var k = ev.which || ev.keyCode;
-                      if (k === 13) {
-                        dc.triggerObj = o;
-                        dc.open();
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                      }
-                    }
-                  });
+            if (dc.trigger)
+              $A.query(dc.trigger, function(i, o) {
+                if (!$A.data(o, "DC-ON")) {
+                  $A.data(o, "DC", dc);
+                  $A.data(o, "DC-ON", true);
                 }
-                $A.on(o, dc.on, function(ev) {
-                  dc.triggerObj = o;
-                  dc.open();
-                  ev.preventDefault();
-                  ev.stopPropagation();
-                });
-              } else if (dc.on && typeof dc.on === "object") {
-                $A.loop(
-                  dc.on,
-                  function(e, fn) {
-                    $A.on(o, e, function(ev, dcO) {
-                      dcO.triggerObj = o;
-                      fn.call(o, ev, dcO);
+                if (dc.on && typeof dc.on === "string") {
+                  if (
+                    !dc.suppressClickSupport &&
+                    isOnClick &&
+                    !$A.isFocusable(o)
+                  ) {
+                    $A.setAttr(o, "tabindex", 0);
+                    $A.on(o, {
+                      keydown: function(ev) {
+                        var k = ev.which || ev.keyCode;
+                        if (k === 13) {
+                          dc.triggerObj = o;
+                          dc.open();
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                        }
+                      }
                     });
-                  },
-                  "object"
-                );
-              }
-            });
+                  }
+                  $A.on(o, dc.on, function(ev) {
+                    dc.triggerObj = o;
+                    dc.open();
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                  });
+                } else if (dc.on && typeof dc.on === "object") {
+                  $A.loop(
+                    dc.on,
+                    function(e, fn) {
+                      $A.on(o, e, function(ev, dcO) {
+                        dcO.triggerObj = o;
+                        fn.call(o, ev, dcO);
+                      });
+                    },
+                    "object"
+                  );
+                }
+              });
             return dc;
           },
           AccDCInit = function(dc) {
@@ -5312,6 +5468,7 @@ https://github.com/whatsock/w3c-alternative-text-computation
             var f = function() {};
             f.prototype = dc;
             var nDC = new f();
+            nDC.props.DC = nDC.DC = nDC;
             setBindings(nDC);
             if (React && nDC.React.component) {
               nDC.React.component = React.cloneElement(nDC.React.component, {
@@ -5368,9 +5525,33 @@ https://github.com/whatsock/w3c-alternative-text-computation
               fn: {
                 isAccDCObject: true
               },
+              props: {},
 
-              sraCSS: $A.sraCSS,
-              sraCSSClear: $A.sraCSSClear,
+              setOffScreen: function() {
+                var dc = this;
+                $A.setOffScreen(dc.outerNode);
+                return dc;
+              },
+
+              clearOffScreen: function() {
+                var dc = this;
+                $A.clearOffScreen(dc.outerNode);
+                return dc;
+              },
+
+              getOffset: function(
+                forceAbsolute,
+                forceRelative,
+                returnTopLeftOnly
+              ) {
+                var dc = this;
+                return $A.getOffset(
+                  dc.outerNode,
+                  forceAbsolute,
+                  forceRelative,
+                  returnTopLeftOnly
+                );
+              },
 
               trigger: "",
               setTrigger: function(dc) {
@@ -5415,6 +5596,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
               },
 
               source: "",
+              sourceOnly: false,
+
               on: "",
               displayInline: false,
 
@@ -5437,12 +5620,12 @@ https://github.com/whatsock/w3c-alternative-text-computation
               runAfterClose: function(dc) {},
               runBeforeDestroy: function(dc) {},
 
-              destroy: function(dc) {
-                var dc = dc || this;
+              destroy: function(p) {
+                var dc = this;
                 setTimeout(function() {
-                  $A.destroy(dc);
+                  $A.destroy(dc, p);
                 }, 1);
-                return dc;
+                return true;
               },
 
               getAttr: function(n) {
@@ -5464,14 +5647,22 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 var dc = this;
                 return $A.hasClass(dc.outerNode, cn);
               },
+
               addClass: function(cn) {
                 var dc = this;
                 $A.addClass(dc.outerNode, cn);
                 return dc;
               },
+
               remClass: function(cn) {
                 var dc = this;
                 $A.remClass(dc.outerNode, cn);
+                return dc;
+              },
+
+              toggleClass: function(cn, isTrue, fn) {
+                var dc = this;
+                $A.toggleClass(dc.outerNode, cn, isTrue, fn);
                 return dc;
               },
 
@@ -5506,9 +5697,13 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 return dc;
               },
 
-              load: function(dc) {
-                var dc = dc || this;
-                $A.insert(dc.source, dc.container);
+              load: function(url, data, sCb) {
+                var dc = this;
+                if (typeof data === "function") {
+                  sCb = data;
+                  data = null;
+                }
+                $A.load(url, dc.container, data, sCb);
                 return dc;
               },
 
@@ -5521,6 +5716,11 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 error: function(errorMsg, promise, dc) {}
               },
 
+              isFocusWithin: function(dc) {
+                var dc = dc || this;
+                return $A.isFocusWithin(dc.container);
+              },
+
               open: function(dc) {
                 var dc = dc || this;
                 if (dc.fn.toggleFocus) {
@@ -5530,6 +5730,112 @@ https://github.com/whatsock/w3c-alternative-text-computation
                 }
                 return dc;
               },
+
+              setProps: function(conf) {
+                var dc = this;
+                $A.extend(true, dc.props, conf || {});
+                dc.props.DC = dc;
+                return dc;
+              },
+
+              insert: function(node) {
+                var dc = this;
+                $A.insert(node, dc.container);
+                return dc;
+              },
+
+              prependWithin: function(node) {
+                var dc = this;
+                $A.prepend(node, dc.container);
+                return dc;
+              },
+
+              appendWithin: function(node) {
+                var dc = this;
+                $A.append(node, dc.container);
+                return dc;
+              },
+
+              openWithin: function(node, conf) {
+                var dc = this;
+                dc.before = dc.prepend = dc.append = dc.after = false;
+                $A.extend(
+                  dc,
+                  {
+                    root: node
+                  },
+                  conf || {}
+                );
+                dc.reopen();
+                return dc;
+              },
+
+              insertBefore: function(node, conf) {
+                var dc = this;
+                dc.before = dc.prepend = dc.append = dc.after = false;
+                $A.extend(
+                  dc,
+                  {
+                    root: node,
+                    before: true
+                  },
+                  conf || {}
+                );
+                dc.reopen();
+                return dc;
+              },
+
+              prependTo: function(node, conf) {
+                var dc = this;
+                dc.before = dc.prepend = dc.append = dc.after = false;
+                $A.extend(
+                  dc,
+                  {
+                    root: node,
+                    prepend: true
+                  },
+                  conf || {}
+                );
+                dc.reopen();
+                return dc;
+              },
+
+              appendTo: function(node, conf) {
+                var dc = this;
+                dc.before = dc.prepend = dc.append = dc.after = false;
+                $A.extend(
+                  dc,
+                  {
+                    root: node,
+                    append: true
+                  },
+                  conf || {}
+                );
+                dc.reopen();
+                return dc;
+              },
+
+              insertAfter: function(node, conf) {
+                var dc = this;
+                dc.before = dc.prepend = dc.append = dc.after = false;
+                $A.extend(
+                  dc,
+                  {
+                    root: node,
+                    after: true
+                  },
+                  conf || {}
+                );
+                dc.reopen();
+                return dc;
+              },
+
+              reopen: function(dc) {
+                var dc = dc || this;
+                dc.close().open();
+                return dc;
+              },
+
               close: function(dc) {
                 var dc = dc || this;
                 return closeAccDCObj(dc);
@@ -5585,22 +5891,106 @@ focusOut: function(ev, dc){ },
                 return dc;
               },
 
+              map: function(o, extend) {
+                var dc = this;
+                if (!o) o = {};
+
+                var inList = function(DC, dcA) {
+                  for (var i = 0; i < dcA.length; i++) {
+                    if (dcA[i].id === DC.id) {
+                      return true;
+                    }
+                  }
+                  return false;
+                };
+
+                if ($A.isDC(o.parent)) {
+                  dc.parent = o.parent;
+                }
+
+                if ($A.isArray(o.children)) {
+                  if (!extend) dc.children = [];
+                  for (var i = 0; i < o.children.length; i++) {
+                    if ($A.isDC(o.children[i])) {
+                      o.children[i].parent = dc;
+                      if (!inList(o.children[i], dc.children))
+                        dc.children.push(o.children[i]);
+                    }
+                  }
+                }
+
+                if ($A.isArray(o.siblings)) {
+                  if (!extend) dc.siblings = [dc];
+                  for (var i = 0; i < o.siblings.length; i++) {
+                    if ($A.isDC(o.siblings[i])) {
+                      if (!inList(o.siblings[i], dc.siblings))
+                        dc.siblings.push(o.siblings[i]);
+                    }
+                  }
+                }
+
+                dc.top = dc;
+                var p = dc.parent;
+                while (
+                  $A.isDC(p) &&
+                  (!dc.widgetType || dc.widgetType === p.widgetType)
+                ) {
+                  dc.top = p;
+                  p = p.parent;
+                }
+
+                if (dc.parent && !extend) dc.parent.children = [];
+                $A.loop(
+                  dc.siblings,
+                  function(x, DC) {
+                    if ($A.isDC(DC)) {
+                      DC.parent = dc.parent;
+                      DC.siblings = dc.siblings;
+                      if (dc.parent && !inList(DC, dc.parent.children))
+                        dc.parent.children.push(DC);
+                    }
+                  },
+                  "array"
+                );
+
+                var setTop = function(a) {
+                  for (var i = 0; i < a.length; i++) {
+                    if ($A.isDC(a[i]) && a[i].children.length) {
+                      $A.loop(
+                        a[i].children,
+                        function(x, DC) {
+                          if ($A.isDC(DC)) {
+                            setTop(DC.siblings);
+                          }
+                        },
+                        "array"
+                      );
+                    }
+                    if ($A.isDC(a[i])) a[i].top = dc.top;
+                  }
+                };
+                setTop(dc.siblings);
+
+                return dc;
+              },
+
               children: [],
+              siblings: [],
               parent: null,
+              top: null,
 
               autoPosition: 0,
               offsetTop: 0,
               offsetLeft: 0,
-              offsetParent: null,
               posAnchor: null,
 
-              setPosition: function(obj, posVal, save, dc) {
+              setPosition: function(obj, posVal, save) {
+                var dc = this;
                 if (typeof obj === "number") {
-                  dc = save;
                   save = posVal;
                   posVal = obj;
+                  obj = null;
                 }
-                var dc = dc || this;
                 if (save) {
                   dc.posAnchor = obj || dc.posAnchor;
                   dc.autoPosition = posVal || dc.autoPosition;
@@ -5609,11 +5999,13 @@ focusOut: function(ev, dc){ },
                 return dc;
               },
 
-              applyFix: function(val, dc) {
-                var dc = dc || this;
-                if (val) dc.autoFix = val;
+              setFix: function(posVal, save) {
+                var dc = this;
+                if (save) {
+                  dc.autoFix = posVal || dc.autoFix;
+                }
                 setAutoFix(dc);
-                if (dc.autoFix > 0) sizeAutoFix(dc);
+                if (posVal > 0) sizeAutoFix(dc);
                 return dc;
               }
             },
@@ -5624,10 +6016,14 @@ focusOut: function(ev, dc){ },
 
           $A.extend(dc, {
             mount: dc["open"],
-            unmount: dc["close"]
+            unmount: dc["close"],
+            mountWithin: dc["openWithin"],
+            insertWithin: dc["openWithin"],
+            getAttribute: dc["getAttr"],
+            removeAttribute: dc["remAttr"],
+            setAttribute: dc["setAttr"],
+            removeClass: dc["remClass"]
           });
-
-          if (aO.mode === 6) var ajaxOptions = dc.ajaxOptions;
 
           if (typeof aO.allowCascade !== "boolean") {
             if (typeof gImport.allowCascade === "boolean")
@@ -5650,9 +6046,6 @@ focusOut: function(ev, dc){ },
 
           $A.extend(true, dc, aO);
 
-          if (aO.mode === 6 && ajaxOptions)
-            $A.extend(dc.ajaxOptions, ajaxOptions);
-
           if (dc.allowCascade) {
             for (s = 0; s < svs.length; s++) {
               $A.fn.globalDC[svs[s]] = gO[svs[s]];
@@ -5663,17 +6056,17 @@ focusOut: function(ev, dc){ },
           if (dc.id) {
             dc.indexVal = wheel.length;
             wheel[dc.indexVal] = AccDCInit(dc);
+            var DC = wheel[dc.indexVal];
 
-            if ($A.isDC(wheel[dc.indexVal])) {
-              if (wheel[dc.indexVal].autoStart) autoStart.push(dc.indexVal);
+            if ($A.isDC(DC)) {
+              if (DC.autoStart) autoStart.push(DC);
 
-              if (wheel[dc.indexVal].isStatic)
-                wheel[dc.indexVal].root = wheel[dc.indexVal].isStatic;
+              if (DC.isStatic) DC.root = DC.isStatic;
 
               if ($A.isDC(parentDC)) {
                 var chk = -1,
                   p = parentDC,
-                  c = $A.reg.get(wheel[dc.indexVal].id);
+                  c = DC;
                 for (var i = 0; i < p.children.length; i++) {
                   if (c.id === p.children[i].id) chk = i;
                 }
@@ -5683,15 +6076,10 @@ focusOut: function(ev, dc){ },
                 var t = c;
                 while (t.parent) t = t.parent;
                 c.top = t;
-              } else wheel[dc.indexVal].top = wheel[dc.indexVal];
+              } else DC.top = DC;
 
-              if (
-                wheel[dc.indexVal].onCreated &&
-                typeof wheel[dc.indexVal].onCreated === "function"
-              ) {
-                wheel[dc.indexVal].onCreated.apply(wheel[dc.indexVal], [
-                  wheel[dc.indexVal]
-                ]);
+              if (DC.onCreated && typeof DC.onCreated === "function") {
+                DC.onCreated.apply(DC, [DC]);
               }
             }
           }
@@ -5700,7 +6088,7 @@ focusOut: function(ev, dc){ },
         for (a = 0; a < wheel.length; a++) wheel[a].siblings = wheel;
 
         for (s = 0; s < autoStart.length; s++) {
-          var dc = wheel[autoStart[s]];
+          var dc = autoStart[s];
           if (!dc.triggerObj && dc.trigger) {
             dc.triggerObj = $A.query(dc.trigger)[0] || null;
           }

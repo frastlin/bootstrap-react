@@ -150,7 +150,7 @@ export function loadAccCarouselModule() {
                 $A.loop(
                   o.boundId,
                   function(i, id) {
-                    let c = $A.getEl(id);
+                    var c = $A.getEl(id);
                     if (c) {
                       boundIds[id] = o.id;
                       $A.setAttr(c, "aria-current", "false");
@@ -438,7 +438,7 @@ export function loadAccCarouselModule() {
 
           if (sett.hiddenMsg && !$A.isTouch()) {
             msgNode = $A("<div>" + sett.hiddenMsg + "</div>")
-              .css($A.sraCSS)
+              .setOffScreen()
               .before(container)
               .announce()
               .return();

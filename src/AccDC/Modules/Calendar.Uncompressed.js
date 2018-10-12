@@ -1432,7 +1432,6 @@ export function loadAccCalendarModule() {
                   keydown: function(ev) {
                     changePressed(ev);
                     var k = ev.which || ev.keyCode;
-
                     if (k === 13) {
                       isKP = true;
 
@@ -2127,7 +2126,7 @@ export function loadAccCalendarModule() {
         });
 
         // Comment object declaration start
-        var commentDC = $A($A.reg.get(pId), [
+        var commentDC = $A(mainDC, [
           {
             id: pId + "commentTooltip",
             role: (config.comments && config.comments.role) || "Comment",
@@ -2162,7 +2161,7 @@ export function loadAccCalendarModule() {
         });
 
         // Form object declaration start
-        var formDC = $A($A.reg.get(pId), [
+        var formDC = $A(mainDC, [
           {
             id: pId + "commentAdd",
             role: (config.editor && config.editor.role) || "Edit",
@@ -2207,14 +2206,6 @@ export function loadAccCalendarModule() {
               });
 
               $A.setAttr(dc.container, "role", "application");
-
-              $A.setAttr(dc.fn.sraStart, {
-                "aria-hidden": "true"
-              });
-
-              $A.setAttr(dc.fn.sraEnd, {
-                "aria-hidden": "true"
-              });
             },
             add: function(dc) {
               var comm = $A.trim(dc.textarea.value.replace(/<|>|\n/g, " "));

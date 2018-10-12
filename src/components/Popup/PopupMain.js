@@ -1,6 +1,17 @@
 import React from "react";
 import strap from "../../AccDC/DC";
 
+/* Directions for Accessible Popups
+
+1. Import AccDC/DC.
+
+2. Import or create named React components to render popup content.
+
+3. Using a native button or link as triggering elements, add the attribute data-popup="popup", and ensure that each triggering element includes a unique ID.
+
+4. Add a data-controls attribute to each triggering element and make sure the name of the attribute matches the object property name of the related React component as submitted to setPopup().
+*/
+
 // Import the React Popup component that will be dynamically rendered
 import PopupQuote from "./Excerpt/PopupHamletExcerpt";
 
