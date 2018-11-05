@@ -1,6 +1,23 @@
 # bootstrap-react
 BETA release of AccDC 4X + React for building advanced accessible ARIA widgets within the React IDE
 
+Accessible Interactive Widgets
+-----
+
+This project includes the following accessible interactive widgets in strict accordance with the ARIA specification plus comprehensive accessibility testing within mainstream browser and assistive technology combinations to ensure the greatest level of accessibility possible across common devices and platforms.
+
+* Accessible Accordions, including single or multiple toggle interactions plus infinite nesting.
+* Accessible Date Pickers, including disabled date ranges, flexible layouts, accessible text customization, dynamic date string formatting, etc.
+* Accessible Carousels, including full slide content customization, event callbacks, grouping support, etc.
+* Accessible Comboboxes, including editable and readonly variations, multiselect support for custom tokenization, first character or substring or word match variations, etc.
+* Accessible Footnotes, including dynamic configuration, multiple trackback references to the same footnote definition, etc.
+* Accessible Menus, including horizontal and vertical keyboard configurations, automatic parent child tracking support, ARIA role usage management, etc.
+* Accessible Modals, including global access support, infinite nesting, automatic keyboard focus management, etc.
+* Accessible Popups (non-modal dialogs), including automatic keyboard focus management, full customization, return focus handling, etc.
+* Accessible Tabs, including full keyboard focus management, ARIA attribute management, lifecycle management, etc.
+
+Confirmed accessible using JAWS12+> within IE11/Firefox, NVDA within Firefox/Chrome, VoiceOver within iOS Safari, TalkBack within Android Chrome/Firefox, Dragon Naturally Speaking within Firefox/Chrome, and using the keyboard without a screen reader running.
+
 Quick Overview
 -----
 
