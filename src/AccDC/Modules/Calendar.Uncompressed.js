@@ -1,6 +1,6 @@
 /*!
-Accessible Calendar Module 3.0 - Minimum requirement: AccDC4X V. 4.2018.0
-Copyright 2010-2018 Bryan Garaventa (WhatSock.com)
+Accessible Calendar Module 3.1 - Minimum requirement: AccDC4X V. 4.2018.0
+Copyright 2019 Bryan Garaventa (WhatSock.com)
 Refactoring Contributions Copyright 2018 Danny Allen (dannya.com) / Wonderscore Ltd (wonderscore.co.uk)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
 */
@@ -22,6 +22,15 @@ export function loadAccCalendarModule() {
           helpText = config.helpText
             ? config.helpText
             : "Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Alt+PageUp and Alt+PageDown to navigate by year, or Escape to cancel.",
+          // Toggles for openOnFocus support.
+          openOnFocusHelpText = config.openOnFocusHelpText
+            ? config.openOnFocusHelpText
+            : "Date picker expanded. Press Down arrow to browse the calendar, or Escape to collapse.",
+          helpTextOnClose = config.helpTextOnClose
+            ? config.helpTextOnClose
+            : "Calendar collapsed.",
+          onFocusInit = false,
+          onFocusTraverse = false,
           // Control the behavior of date selection clicks
           handleClick =
             callback && typeof callback === "function"
@@ -38,9 +47,10 @@ export function loadAccCalendarModule() {
                     M: dc.range.current.month + 1,
                     D: dc.range.current.mDay
                   });
-                  dc.returnFocus = false;
                   dc.close();
-                  dc.returnFocus = true;
+                  // Toggles for openOnFocus support.
+                  onFocusInit = false;
+                  onFocusTraverse = true;
                   $A.focus(targ);
                 },
           pressed = {},
@@ -62,10 +72,14 @@ export function loadAccCalendarModule() {
               autoCloseWidget: true,
               autoCloseSameWidget: true,
               trigger: trigger,
-              returnFocus: true,
-              root: "body",
-              append: true,
+              // root: "body",
+              // append: true,
               on: "opendatepicker",
+              // Toggles for openOnFocus support.
+              returnFocus: false,
+              openOnFocus: config.openOnFocus === true,
+              openOnFocusHelpText: openOnFocusHelpText,
+              helpTextOnClose: helpTextOnClose,
               allowReopen: true,
               exposeHiddenClose: false,
               tooltipTxt: config.tooltipTxt || "Press Escape to cancel",
@@ -450,7 +464,12 @@ export function loadAccCalendarModule() {
                     $A.announce(dc.range.current.year.toString());
                     dc.navBtnS = true;
                   } else {
-                    o.focus();
+                    // Toggles for openOnFocus support.
+                    if (
+                      !dc.openOnFocus ||
+                      (dc.openOnFocus && !onFocusInit && onFocusTraverse)
+                    )
+                      o.focus();
                   }
                 }
 
@@ -1637,6 +1656,10 @@ export function loadAccCalendarModule() {
                       } else if (k === 27) {
                         // Esc key
                         dc.close();
+                        // Toggles for openOnFocus support.
+                        onFocusInit = false;
+                        onFocusTraverse = true;
+                        $A.focus(targ);
                       } else if (k === 33) {
                         // PageUp key
                         $A.extend(true, dc.prevCurrent, dc.range.current);
@@ -1804,6 +1827,10 @@ export function loadAccCalendarModule() {
                       ev.preventDefault();
                     } else if (k === 27) {
                       dc.close();
+                      // Toggles for openOnFocus support.
+                      onFocusInit = false;
+                      onFocusTraverse = true;
+                      $A.focus(targ);
                       ev.preventDefault();
                     } else if (!config.condenseYear && k === 38) {
                       dc.buttons.pY.focus();
@@ -1873,6 +1900,10 @@ export function loadAccCalendarModule() {
                       ev.preventDefault();
                     } else if (k === 27) {
                       dc.close();
+                      // Toggles for openOnFocus support.
+                      onFocusInit = false;
+                      onFocusTraverse = true;
+                      $A.focus(targ);
                       ev.preventDefault();
                     } else if (!config.condenseYear && k === 38) {
                       dc.buttons.nY.focus();
@@ -1939,6 +1970,10 @@ export function loadAccCalendarModule() {
                         ev.preventDefault();
                       } else if (k === 27) {
                         dc.close();
+                        // Toggles for openOnFocus support.
+                        onFocusInit = false;
+                        onFocusTraverse = true;
+                        $A.focus(targ);
                         ev.preventDefault();
                       } else if (k === 39) {
                         dc.buttons.nY.focus();
@@ -2002,6 +2037,10 @@ export function loadAccCalendarModule() {
                         ev.preventDefault();
                       } else if (k === 27) {
                         dc.close();
+                        // Toggles for openOnFocus support.
+                        onFocusInit = false;
+                        onFocusTraverse = true;
+                        $A.focus(targ);
                         ev.preventDefault();
                       } else if (k === 37) {
                         dc.buttons.pY.focus();
@@ -2064,7 +2103,16 @@ export function loadAccCalendarModule() {
                 }, 750);
 
                 if (!dc.navBtnS) {
-                  if (!$A.isTouch()) $A.announce(dc.helpText);
+                  if (!$A.isTouch()) {
+                    // Toggles for openOnFocus support.
+                    if (
+                      !config.openOnFocus ||
+                      (config.openOnFocus === true &&
+                        !onFocusInit &&
+                        onFocusTraverse)
+                    )
+                      $A.announce(dc.helpText);
+                  }
                 }
                 dc.navBtnS = false;
               },
@@ -2101,30 +2149,6 @@ export function loadAccCalendarModule() {
         )[0];
         // Calendar object declaration end
 
-        $A.on(window, "resize." + baseId, function(ev) {
-          mainDC.setPosition();
-        });
-
-        $A.setAttr(trigger, "aria-expanded", "false");
-
-        var odc = $A.reg.get(pId),
-          odcDel = false,
-          odcDelFn = function() {
-            odcDel = false;
-          };
-        $A.on(trigger, "click", function(ev) {
-          if (!odcDel && !odc.loaded) {
-            odcDel = true;
-            $A.trigger(this, "opendatepicker");
-            setTimeout(odcDelFn, 1000);
-          } else if (!odcDel && odc.loaded) {
-            odcDel = true;
-            odc.close();
-            setTimeout(odcDelFn, 1000);
-          }
-          ev.preventDefault();
-        });
-
         // Comment object declaration start
         var commentDC = $A(mainDC, [
           {
@@ -2155,10 +2179,6 @@ export function loadAccCalendarModule() {
           }
         ])[0];
         // Comment object declaration end
-
-        $A.on(window, "resize." + baseId, function(ev) {
-          commentDC.setPosition();
-        });
 
         // Form object declaration start
         var formDC = $A(mainDC, [
@@ -2429,9 +2449,116 @@ export function loadAccCalendarModule() {
         // Form object declaration end
 
         $A.on(window, "resize." + baseId, function(ev) {
+          mainDC.setPosition();
+          commentDC.setPosition();
           formDC.setPosition();
           formDC.reset();
         });
+
+        $A.setAttr(trigger, "aria-expanded", "false");
+
+        // Toggles for openOnFocus support.
+        var odc = $A.reg.get(pId),
+          odcDel = false,
+          odcDelFn = function() {
+            odcDel = false;
+          },
+          odcFn = function() {
+            if (!odcDel && !odc.loaded) {
+              odcDel = true;
+              // Toggles for openOnFocus support.
+              onFocusInit = false;
+              onFocusTraverse = true;
+              $A.trigger(this, "opendatepicker");
+              setTimeout(odcDelFn, 1000);
+            } else if (!odcDel && odc.loaded) {
+              odcDel = true;
+              odc.close();
+              // Toggles for openOnFocus support.
+              onFocusInit = false;
+              onFocusTraverse = false;
+              $A.announce(odc.helpTextOnClose);
+              setTimeout(odcDelFn, 1000);
+            }
+          };
+
+        $A.on(trigger, {
+          click: function(ev) {
+            odcFn.call(this);
+            ev.preventDefault();
+          },
+          keydown: function(ev) {
+            var k = ev.which || ev.keyCode;
+
+            if (k === 32) {
+              odcFn.call(this);
+              ev.preventDefault();
+              ev.stopPropagation();
+            }
+          }
+        });
+
+        // Toggles for openOnFocus support.
+        if (config.openOnFocus === true) {
+          $A.on(targ, {
+            focus: function(ev) {
+              if (!$A.isTouch()) {
+                if (
+                  !odcDel &&
+                  !odc.loaded &&
+                  !onFocusInit &&
+                  !onFocusTraverse
+                ) {
+                  odcDel = true;
+                  $A.trigger(trigger, "opendatepicker");
+                  $A.announce(odc.openOnFocusHelpText);
+                  setTimeout(odcDelFn, 1000);
+                }
+                onFocusInit = true;
+                onFocusTraverse = false;
+              }
+            },
+            blur: function(ev) {
+              onFocusInit = false;
+            },
+            keydown: function(ev) {
+              var k = ev.which || ev.keyCode;
+
+              if (k === 40 && onFocusInit && !onFocusTraverse && odc.loaded) {
+                onFocusInit = false;
+                onFocusTraverse = true;
+                odc.setFocus(odc.range.index[odc.range.current.mDay - 1]);
+                $A.announce(odc.helpText);
+                ev.preventDefault();
+                ev.stopPropagation();
+              } else if (
+                k === 27 &&
+                onFocusInit &&
+                !onFocusTraverse &&
+                odc.loaded
+              ) {
+                onFocusInit = false;
+                onFocusTraverse = false;
+                odc.close();
+                $A.announce(odc.helpTextOnClose);
+                ev.preventDefault();
+                ev.stopPropagation();
+              } else if (
+                k === 9 &&
+                onFocusInit &&
+                !onFocusTraverse &&
+                odc.loaded
+              ) {
+                onFocusInit = false;
+                onFocusTraverse = false;
+                odc.close();
+                $A.announce(odc.helpTextOnClose);
+                // ev.preventDefault();
+                ev.stopPropagation();
+              }
+            }
+          });
+        }
 
         $A.on("body", "click." + baseId, function(ev) {
           if (mainDC.datepickerLoaded) mainDC.close();

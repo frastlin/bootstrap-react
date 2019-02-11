@@ -133,7 +133,9 @@ export function setCalendar(ReactComponent, config) {
             React: {
               parent: ReactComponent
             },
-            RenderUsingReact: true
+            RenderUsingReact: true,
+                        root: "body",
+                        append: true
           });
           $A.setCalendar(o.id, o, targ, false, null, config.overrides);
         });
