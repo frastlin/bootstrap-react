@@ -1,5 +1,5 @@
 /*!
-Accessible Calendar Module 3.1 - Minimum requirement: AccDC4X V. 4.2018.0
+Accessible Calendar Module 3.2 - Minimum requirement: AccDC4X V. 4.2018.0
 Copyright 2019 Bryan Garaventa (WhatSock.com)
 Refactoring Contributions Copyright 2018 Danny Allen (dannya.com) / Wonderscore Ltd (wonderscore.co.uk)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
@@ -2483,11 +2483,11 @@ export function loadAccCalendarModule() {
           };
 
         $A.on(trigger, {
-          click: function(ev) {
+          "click." + baseId: function(ev) {
             odcFn.call(this);
             ev.preventDefault();
           },
-          keydown: function(ev) {
+          "keydown." + baseId: function(ev) {
             var k = ev.which || ev.keyCode;
 
             if (k === 32) {
@@ -2501,8 +2501,17 @@ export function loadAccCalendarModule() {
         // Toggles for openOnFocus support.
         if (config.openOnFocus === true) {
           $A.on(targ, {
-            focus: function(ev) {
-              if (!$A.isTouch()) {
+							"touchstart." + baseId: function(ev){
+								if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse){
+                  odcDel = true;
+                  $A.trigger(trigger, "opendatepicker");
+                  $A.announce(odc.openOnFocusHelpText);
+									ev.preventDefault();
+                  setTimeout(odcDelFn, 1000);
+								}
+							},
+            "focus." + baseId: function(ev) {
+              // if (!$A.isTouch()) {
                 if (
                   !odcDel &&
                   !odc.loaded &&
@@ -2516,12 +2525,12 @@ export function loadAccCalendarModule() {
                 }
                 onFocusInit = true;
                 onFocusTraverse = false;
-              }
+              // }
             },
-            blur: function(ev) {
+            "blur." + baseId: function(ev) {
               onFocusInit = false;
             },
-            keydown: function(ev) {
+            "keydown." + baseId: function(ev) {
               var k = ev.which || ev.keyCode;
 
               if (k === 40 && onFocusInit && !onFocusTraverse && odc.loaded) {
