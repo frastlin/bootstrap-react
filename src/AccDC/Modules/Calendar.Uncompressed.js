@@ -2091,8 +2091,7 @@ export function loadAccCalendarModule() {
                 if (commentsEnabled && config.editor && config.editor.show)
                   dc.children[1].open();
 
-							if (dc.openOnFocus)
-								$A.setAttr(targ, 'aria-expanded', 'true');
+                if (dc.openOnFocus) $A.setAttr(targ, "aria-expanded", "true");
                 $A.setAttr(dc.triggerObj, "aria-expanded", "true");
                 setTimeout(function() {
                   dc.datepickerLoaded = true;
@@ -2134,8 +2133,7 @@ export function loadAccCalendarModule() {
 
                 $A.setAttr(dc.triggerObj, "aria-expanded", "false");
 
-							if (dc.openOnFocus)
-								$A.setAttr(targ, 'aria-expanded', 'false');
+                if (dc.openOnFocus) $A.setAttr(targ, "aria-expanded", "false");
 
                 // Run custom specified function?
                 if (typeof config.runAfterClose === "function") {
@@ -2481,11 +2479,11 @@ export function loadAccCalendarModule() {
           };
 
         $A.on(trigger, {
-          "click." + baseId: function(ev) {
+          click: function(ev) {
             odcFn.call(this);
             ev.preventDefault();
           },
-          "keydown." + baseId: function(ev) {
+          keydown: function(ev) {
             var k = ev.which || ev.keyCode;
 
             if (k === 32) {
@@ -2498,36 +2496,31 @@ export function loadAccCalendarModule() {
 
         // Toggles for openOnFocus support.
         if (config.openOnFocus === true) {
-			$A.setAttr(targ, 'aria-expanded', 'false');
+          $A.setAttr(targ, "aria-expanded", "false");
 
           $A.on(targ, {
-							"touchstart." + baseId: function(ev){
-								if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse){
-                  odcDel = true;
-                  $A.trigger(trigger, "opendatepicker");
-									ev.preventDefault();
-                  setTimeout(odcDelFn, 1000);
-								}
-							},
-            "focus." + baseId: function(ev) {
-                if (
-                  !odcDel &&
-                  !odc.loaded &&
-                  !onFocusInit &&
-                  !onFocusTraverse
-                ) {
-                  odcDel = true;
-                  $A.trigger(trigger, "opendatepicker");
-                  $A.announce(odc.openOnFocusHelpText);
-                  setTimeout(odcDelFn, 1000);
-                }
-                onFocusInit = true;
-                onFocusTraverse = false;
+            touchstart: function(ev) {
+              if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse) {
+                odcDel = true;
+                $A.trigger(trigger, "opendatepicker");
+                ev.preventDefault();
+                setTimeout(odcDelFn, 1000);
+              }
             },
-            "blur." + baseId: function(ev) {
+            focus: function(ev) {
+              if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse) {
+                odcDel = true;
+                $A.trigger(trigger, "opendatepicker");
+                $A.announce(odc.openOnFocusHelpText);
+                setTimeout(odcDelFn, 1000);
+              }
+              onFocusInit = true;
+              onFocusTraverse = false;
+            },
+            blur: function(ev) {
               onFocusInit = false;
             },
-            "keydown." + baseId: function(ev) {
+            keydown: function(ev) {
               var k = ev.which || ev.keyCode;
 
               if (k === 40 && onFocusInit && !onFocusTraverse && odc.loaded) {
@@ -2557,7 +2550,7 @@ export function loadAccCalendarModule() {
                 onFocusInit = false;
                 onFocusTraverse = false;
                 odc.close();
-									ev.preventDefault();
+                ev.preventDefault();
                 ev.stopPropagation();
               }
             }
