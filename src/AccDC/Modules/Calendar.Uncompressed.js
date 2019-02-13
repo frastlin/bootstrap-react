@@ -1,5 +1,5 @@
 /*!
-Accessible Calendar Module 3.2 - Minimum requirement: AccDC4X V. 4.2018.0
+Accessible Calendar Module 3.3 - Minimum requirement: AccDC4X V. 4.2018.0
 Copyright 2019 Bryan Garaventa (WhatSock.com)
 Refactoring Contributions Copyright 2018 Danny Allen (dannya.com) / Wonderscore Ltd (wonderscore.co.uk)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
@@ -25,10 +25,7 @@ export function loadAccCalendarModule() {
           // Toggles for openOnFocus support.
           openOnFocusHelpText = config.openOnFocusHelpText
             ? config.openOnFocusHelpText
-            : "Date picker expanded. Press Down arrow to browse the calendar, or Escape to collapse.",
-          helpTextOnClose = config.helpTextOnClose
-            ? config.helpTextOnClose
-            : "Calendar collapsed.",
+            : "Press Down arrow to browse the calendar, or Escape to close.",
           onFocusInit = false,
           onFocusTraverse = false,
           // Control the behavior of date selection clicks
@@ -72,14 +69,11 @@ export function loadAccCalendarModule() {
               autoCloseWidget: true,
               autoCloseSameWidget: true,
               trigger: trigger,
-              // root: "body",
-              // append: true,
               on: "opendatepicker",
               // Toggles for openOnFocus support.
               returnFocus: false,
               openOnFocus: config.openOnFocus === true,
               openOnFocusHelpText: openOnFocusHelpText,
-              helpTextOnClose: helpTextOnClose,
               allowReopen: true,
               exposeHiddenClose: false,
               tooltipTxt: config.tooltipTxt || "Press Escape to cancel",
@@ -2097,6 +2091,8 @@ export function loadAccCalendarModule() {
                 if (commentsEnabled && config.editor && config.editor.show)
                   dc.children[1].open();
 
+							if (dc.openOnFocus)
+								$A.setAttr(targ, 'aria-expanded', 'true');
                 $A.setAttr(dc.triggerObj, "aria-expanded", "true");
                 setTimeout(function() {
                   dc.datepickerLoaded = true;
@@ -2137,6 +2133,9 @@ export function loadAccCalendarModule() {
                   dc.lock = dc.ajaxLoading = false;
 
                 $A.setAttr(dc.triggerObj, "aria-expanded", "false");
+
+							if (dc.openOnFocus)
+								$A.setAttr(targ, 'aria-expanded', 'false');
 
                 // Run custom specified function?
                 if (typeof config.runAfterClose === "function") {
@@ -2477,7 +2476,6 @@ export function loadAccCalendarModule() {
               // Toggles for openOnFocus support.
               onFocusInit = false;
               onFocusTraverse = false;
-              $A.announce(odc.helpTextOnClose);
               setTimeout(odcDelFn, 1000);
             }
           };
@@ -2500,18 +2498,18 @@ export function loadAccCalendarModule() {
 
         // Toggles for openOnFocus support.
         if (config.openOnFocus === true) {
+			$A.setAttr(targ, 'aria-expanded', 'false');
+
           $A.on(targ, {
 							"touchstart." + baseId: function(ev){
 								if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse){
                   odcDel = true;
                   $A.trigger(trigger, "opendatepicker");
-                  $A.announce(odc.openOnFocusHelpText);
 									ev.preventDefault();
                   setTimeout(odcDelFn, 1000);
 								}
 							},
             "focus." + baseId: function(ev) {
-              // if (!$A.isTouch()) {
                 if (
                   !odcDel &&
                   !odc.loaded &&
@@ -2525,7 +2523,6 @@ export function loadAccCalendarModule() {
                 }
                 onFocusInit = true;
                 onFocusTraverse = false;
-              // }
             },
             "blur." + baseId: function(ev) {
               onFocusInit = false;
@@ -2549,7 +2546,6 @@ export function loadAccCalendarModule() {
                 onFocusInit = false;
                 onFocusTraverse = false;
                 odc.close();
-                $A.announce(odc.helpTextOnClose);
                 ev.preventDefault();
                 ev.stopPropagation();
               } else if (
@@ -2561,8 +2557,7 @@ export function loadAccCalendarModule() {
                 onFocusInit = false;
                 onFocusTraverse = false;
                 odc.close();
-                $A.announce(odc.helpTextOnClose);
-                // ev.preventDefault();
+									ev.preventDefault();
                 ev.stopPropagation();
               }
             }
