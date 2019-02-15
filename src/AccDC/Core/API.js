@@ -442,8 +442,8 @@ export function $AccDC() {
               o && typeof o === "object" && o.nodeType && o.outerHTML
                 ? o.outerHTML
                 : o && typeof o === "object" && o.nodeType === 3 && o.data
-                  ? o.data
-                  : o
+                ? o.data
+                : o
             );
           }
           if (!$A.isReact(o)) {
@@ -3134,7 +3134,7 @@ verticalStop: true or false
         },
 
         /*
-AccName Prototype 2.17, compute the Name and Description property values for a DOM node
+AccName Prototype 2.18, compute the Name and Description property values for a DOM node
 https://github.com/whatsock/w3c-alternative-text-computation
 */
         getAccName: function(node, fnc, preventVisualARIASelfCSSRef) {
@@ -3706,7 +3706,9 @@ https://github.com/whatsock/w3c-alternative-text-computation
                     trim(nTitle) &&
                     !isSeparatChildFormField
                   ) {
-                    result.title = trim(nTitle);
+                    if (!hasName) name = trim(nTitle);
+                    else result.title = trim(nTitle);
+                    if (trim(name)) hasName = true;
                   }
 
                   // Check for non-empty value of aria-owns, follow each ID ref, then process with same naming computation.
