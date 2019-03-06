@@ -425,7 +425,7 @@ export function vARIA() {
         for (var aN = 0; aN < accNames.length; aN++) {
           calcNames(
             accNames[aN],
-            function(node, props) {
+            function(props, node) {
               if (
                 " input textarea img progress ".indexOf(
                   " " + node.nodeName.toLowerCase() + " "

@@ -127,17 +127,16 @@ export function setCalendar(ReactComponent, config) {
           i,
           o
         ) {
-          var targ = $A.query("#" + $A.getAttr(o, "data-controls"), context)[0];
-          config.overrides = config.overrides || {};
-          $A.extend(config.overrides, {
+          var targ = $A.query("#" + $A.getAttr(o, "data-controls"))[0];
+          $A.extend(true, config, {
             React: {
               parent: ReactComponent
             },
             RenderUsingReact: true,
-                        root: "body",
-                        append: true
+            root: "body",
+            append: true
           });
-          $A.setCalendar(o.id, o, targ, false, null, config.overrides);
+          $A.setCalendar(o.id, o, targ, false, config.callback, config);
         });
       }
     });

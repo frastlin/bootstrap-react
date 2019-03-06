@@ -1,5 +1,5 @@
 /*!
-Accessible Calendar Module 3.3 - Minimum requirement: AccDC4X V. 4.2018.0
+Accessible Calendar Module 3.4 - Minimum requirement: AccDC4X V. 4.2019.0
 Copyright 2019 Bryan Garaventa (WhatSock.com)
 Refactoring Contributions Copyright 2018 Danny Allen (dannya.com) / Wonderscore Ltd (wonderscore.co.uk)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
@@ -19,6 +19,9 @@ export function loadAccCalendarModule() {
         config
       ) {
         var config = config || {},
+          helpTextShort = config.helpTextShort
+            ? config.helpTextShort
+            : "Press H for help.",
           helpText = config.helpText
             ? config.helpText
             : "Press the arrow keys to navigate by day, PageUp and PageDown to navigate by month, Alt+PageUp and Alt+PageDown to navigate by year, or Escape to cancel.",
@@ -34,20 +37,8 @@ export function loadAccCalendarModule() {
               ? callback
               : function(ev, dc) {
                   // format selected calendar value and set into input field
-                  targ.value = dc.formatDate(dc, {
-                    YYYY: dc.range.current.year,
-                    MMMM: dc.range[dc.range.current.month].name,
-                    dddd: dc.range.wDays[dc.range.current.wDay].lng,
-                    MM: ("00" + (dc.range.current.month + 1)).slice(-2),
-                    DD: ("00" + dc.range.current.mDay).slice(-2),
-                    Do: dc.getDateOrdinalSuffix(dc.range.current.mDay),
-                    M: dc.range.current.month + 1,
-                    D: dc.range.current.mDay
-                  });
+                  targ.value = dc.formatDate(dc);
                   dc.close();
-                  // Toggles for openOnFocus support.
-                  onFocusInit = false;
-                  onFocusTraverse = true;
                   $A.focus(targ);
                 },
           pressed = {},
@@ -70,10 +61,14 @@ export function loadAccCalendarModule() {
               autoCloseSameWidget: true,
               trigger: trigger,
               on: "opendatepicker",
+              disabled: config.disabled === true,
               // Toggles for openOnFocus support.
               returnFocus: false,
               openOnFocus: config.openOnFocus === true,
               openOnFocusHelpText: openOnFocusHelpText,
+              showEscBtn: config.showEscBtn === true,
+              escBtnName: config.escBtnName || "Close",
+              escBtnIcon: config.escBtnIcon || "&times;",
               allowReopen: true,
               exposeHiddenClose: false,
               tooltipTxt: config.tooltipTxt || "Press Escape to cancel",
@@ -373,10 +368,21 @@ export function loadAccCalendarModule() {
                 return i + "th";
               },
               formatDate: function(dc, dateFormatTokens, dateFormat) {
+                if (!dateFormatTokens)
+                  dateFormatTokens = {
+                    YYYY: dc.range.current.year,
+                    MMMM: dc.range[dc.range.current.month].name,
+                    dddd: dc.range.wDays[dc.range.current.wDay].lng,
+                    MM: ("00" + (dc.range.current.month + 1)).slice(-2),
+                    DD: ("00" + dc.range.current.mDay).slice(-2),
+                    Do: dc.getDateOrdinalSuffix(dc.range.current.mDay),
+                    M: dc.range.current.month + 1,
+                    D: dc.range.current.mDay
+                  };
+
                 // if dateFormat is not specified, use component default
-                if (typeof dateFormat !== "string") {
+                if (typeof dateFormat !== "string")
                   dateFormat = dc.inputDateFormat;
-                }
 
                 var re = new RegExp(
                   Object.keys(dateFormatTokens).join("|"),
@@ -424,11 +430,8 @@ export function loadAccCalendarModule() {
 
                 if (!o) return false;
 
-                this.current = o;
-                $A.query("td.dayInMonth.selected", this.container, function(
-                  i,
-                  p
-                ) {
+                dc.current = o;
+                dc.query("td.dayInMonth.selected", function(i, p) {
                   $A.setAttr(p, {
                     tabindex: "-1"
                   });
@@ -473,12 +476,14 @@ export function loadAccCalendarModule() {
                 return true;
               },
               setCurrent: function(dc) {
-                dc.range.current = {
-                  mDay: dc.date.getDate(),
-                  month: dc.date.getMonth(),
-                  year: dc.date.getFullYear(),
-                  wDay: dc.date.getDay()
-                };
+                if (dc.date instanceof Date) {
+                  dc.range.current = {
+                    mDay: dc.date.getDate(),
+                    month: dc.date.getMonth(),
+                    year: dc.date.getFullYear(),
+                    wDay: dc.date.getDay()
+                  };
+                }
               },
               setDayMarked: function(dc, dateObj, isMarked) {
                 var year = dateObj.getFullYear(),
@@ -780,6 +785,17 @@ export function loadAccCalendarModule() {
                   10
                 );
               },
+              presetDate: function(dc, initialDate, minDate, maxDate) {
+                dc = dc || this;
+                dc.initialDate = initialDate || dc.initialDate || new Date();
+                dc.minDate = minDate || dc.minDate || null;
+                dc.maxDate = maxDate || dc.maxDate || null;
+                dc.date = dc.currentDate;
+                dc.setDateComparisons(dc);
+                dc.setCurrent(dc);
+                dc.fn.current = {};
+                $A.extend(true, dc.fn.current, dc.range.current);
+              },
               setDate: function(dc, dateObj) {
                 // if dateObj is not specified, set to an initial value...
                 if (dateObj === undefined) {
@@ -805,30 +821,51 @@ export function loadAccCalendarModule() {
                 dc.fn.current = {};
                 $A.extend(true, dc.fn.current, dc.range.current);
               },
-              runOnceBefore: function(dc) {
+              setDateComparisons: function(dc) {
                 // If we have minDate / maxDate set, ensure they don't have time precision, and create comparison value
-                if (dc.minDate) {
+                if (dc.minDate instanceof Date) {
                   dc.minDate.setHours(0, 0, 0, 0);
                   dc.minDateComparisonValue = dc.createDateComparisonValue(
                     dc.minDate
                   );
                 }
-
-                if (dc.maxDate) {
+                if (dc.maxDate instanceof Date) {
                   dc.maxDate.setHours(0, 0, 0, 0);
                   dc.maxDateComparisonValue = dc.createDateComparisonValue(
                     dc.maxDate
                   );
                 }
-
-                // set date to initialDate
-                this.setDate(dc);
-
+                if (dc.initialDate instanceof Date) {
+                  dc.currentDate = dc.initialDate;
+                } else {
+                  dc.currentDate = new Date();
+                }
                 // Cache current date for comparison
-                dc.currentDate = new Date();
                 dc.currentDateComparisonValue = dc.createDateComparisonValue(
                   dc.currentDate
                 );
+              },
+              storeCurrentDate: function(dc) {
+                dc.date = new Date(
+                  dc.range.current.year,
+                  dc.range.current.month,
+                  dc.range.current.mDay
+                );
+              },
+              setDisabled: function(dc, s) {
+                if (typeof dc === "boolean") {
+                  s = dc;
+                  dc = this;
+                } else dc = dc || this;
+                dc.disabled = s ? true : false;
+                $A.setAttr([targ, trigger], "disabled", dc.disabled);
+                if (!dc.disabled) $A.remAttr([targ, trigger], "disabled");
+              },
+              runOnceBefore: function(dc) {
+                if (!(dc.date instanceof Date)) {
+                  dc.setDateComparisons(dc);
+                  dc.setDate(dc);
+                }
               },
               runBefore: function(dc) {
                 // Run custom specified function?
@@ -1013,11 +1050,12 @@ export function loadAccCalendarModule() {
                   dc.rightButtonMonthText +
                   "</span></td></tr>";
 
+                dc.source = "";
+
                 // Start constructing the Datepicker table element
-                dc.source =
-                  '<table role="application" class="calendar" aria-label="' +
-                  dc.role +
-                  '">' +
+                // Reconfigured for Esc btn processing
+                dc.source +=
+                  '<table role="presentation" class="calendar">' +
                   yearSelector +
                   monthSelector +
                   '<tr role="presentation">';
@@ -1158,9 +1196,32 @@ export function loadAccCalendarModule() {
                     "</p>" +
                     "</div>";
                 }
+
+                // Reconfigured for Esc btn processing
+                if (dc.showEscBtn) {
+                  dc.source +=
+                    '<button id="' +
+                    dc.baseId +
+                    'esc" aria-label="' +
+                    dc.escBtnName +
+                    '" title="' +
+                    dc.escBtnName +
+                    '" class="esc-button">' +
+                    dc.escBtnIcon +
+                    "</button>";
+                }
               },
               click: function(ev, dc) {
                 ev.stopPropagation();
+              },
+              keyDown: function(ev, dc) {
+                var k = ev.which || ev.keyCode;
+
+                if (k === 72) {
+                  $A.announce(dc.helpText);
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                }
               },
               runDuring: function(dc) {
                 dc.datepickerLoaded = false;
@@ -1168,16 +1229,22 @@ export function loadAccCalendarModule() {
                 $A.setAttr(dc.outerNode, {
                   role: "dialog",
                   "data-helptext": dc.helpText,
-                  "aria-label": dc.role,
-                  "aria-describedby": dc.monthCellId
+                  "aria-label": dc.range[dc.range.current.month].name
                 });
+
+                // Reconfigured for Esc btn processing
+                $A.setAttr(dc.container, {
+                  role: "application"
+                });
+
+                // Reconfigured for Esc btn processing
+                if (dc.showEscBtn) {
+                  dc.escBtn = dc.query("button.esc-button")[0];
+                }
               },
               updateDisabled: function() {
                 var dc = this;
-                $A.query('td[aria-disabled="true"]', dc.container, function(
-                  i,
-                  o
-                ) {
+                dc.query('td[aria-disabled="true"]', function(i, o) {
                   $A.data(o, "disabled", true);
                 });
               },
@@ -1349,618 +1416,633 @@ export function loadAccCalendarModule() {
                     dc.open();
                   };
                 var isKP = false;
-                $A.on("#" + dc.containerId + " td.day", {
-                  focus: function(ev) {
-                    if ($A.hasClass(this, "comment")) {
-                      var tooltipDC = dc.children[0],
-                        year =
-                          dc.range[dc.range.current.month].comments[
-                            dc.range.current.year
-                          ],
-                        all = dc.range[dc.range.current.month].comments["*"],
-                        comm = "";
+                $A.on(
+                  "#" + dc.containerId + " td.day",
+                  {
+                    focus: function(ev) {
+                      if ($A.hasClass(this, "comment")) {
+                        var tooltipDC = dc.children[0],
+                          year =
+                            dc.range[dc.range.current.month].comments[
+                              dc.range.current.year
+                            ],
+                          all = dc.range[dc.range.current.month].comments["*"],
+                          comm = "";
 
-                      if (year && year[dc.range.current.mDay])
-                        comm = year[dc.range.current.mDay];
-                      else if (all && all[dc.range.current.mDay])
-                        comm = all[dc.range.current.mDay];
-                      comm = $A.trim(comm.replace(/<|>/g, ""));
+                        if (year && year[dc.range.current.mDay])
+                          comm = year[dc.range.current.mDay];
+                        else if (all && all[dc.range.current.mDay])
+                          comm = all[dc.range.current.mDay];
+                        comm = $A.trim(comm.replace(/<|>/g, ""));
 
-                      if (comm) {
-                        tooltipDC.source = comm;
-                        tooltipDC.open();
+                        if (comm) {
+                          tooltipDC.source = comm;
+                          tooltipDC.open();
+                        }
+                      } else if (
+                        dc.children &&
+                        dc.children.length &&
+                        dc.children[0].loaded
+                      ) {
+                        dc.children[0].close();
                       }
-                    } else if (
-                      dc.children &&
-                      dc.children.length &&
-                      dc.children[0].loaded
-                    ) {
-                      dc.children[0].close();
-                    }
 
-                    if (
-                      dc.children &&
-                      dc.children.length &&
-                      dc.children[1].openEditor
-                    ) {
-                      dc.children[1].openEditor = false;
-                      dc.children[1].reset();
-                    }
-                  },
-                  click: function(ev) {
-                    // If items from a previous / next month are selected, modify the date accordingly
-                    if ($A.hasClass(this, "dayInPrevMonth")) {
-                      var prevDateValues = dc.modifyDateValues(
-                        {
-                          month: dc.range.current.month,
-                          year: dc.range.current.year
-                        },
-                        {
-                          month: -1
-                        }
-                      );
+                      if (
+                        dc.children &&
+                        dc.children.length &&
+                        dc.children[1].openEditor
+                      ) {
+                        dc.children[1].openEditor = false;
+                        dc.children[1].reset();
+                      }
+                    },
+                    click: function(ev) {
+                      // If items from a previous / next month are selected, modify the date accordingly
+                      if ($A.hasClass(this, "dayInPrevMonth")) {
+                        var prevDateValues = dc.modifyDateValues(
+                          {
+                            month: dc.range.current.month,
+                            year: dc.range.current.year
+                          },
+                          {
+                            month: -1
+                          }
+                        );
 
-                      dc.date = new Date(
-                        prevDateValues.year,
-                        prevDateValues.month,
-                        dc.range.track[this.id]
-                      );
-                    } else if ($A.hasClass(this, "dayInNextMonth")) {
-                      var nextDateValues = dc.modifyDateValues(
-                        {
-                          month: dc.range.current.month,
-                          year: dc.range.current.year
-                        },
-                        {
-                          month: 1
-                        }
-                      );
+                        dc.date = new Date(
+                          prevDateValues.year,
+                          prevDateValues.month,
+                          dc.range.track[this.id]
+                        );
+                      } else if ($A.hasClass(this, "dayInNextMonth")) {
+                        var nextDateValues = dc.modifyDateValues(
+                          {
+                            month: dc.range.current.month,
+                            year: dc.range.current.year
+                          },
+                          {
+                            month: 1
+                          }
+                        );
 
-                      dc.date = new Date(
-                        nextDateValues.year,
-                        nextDateValues.month,
-                        dc.range.track[this.id]
-                      );
-                    } else {
-                      // Selection in current month, just adjust the date
-                      dc.date.setDate(dc.range.track[this.id]);
-                    }
-
-                    dc.setCurrent(dc);
-
-                    if (
-                      $A.hasClass(this, "selected") ||
-                      (!commentsEnabled && !$A.hasClass(this, "comment"))
-                    ) {
-                      if (!$A.data(this, "disabled")) {
-                        $A.extend(true, dc.fn.current, dc.range.current);
-                        handleClick.apply(this, [ev, dc, targ]);
+                        dc.date = new Date(
+                          nextDateValues.year,
+                          nextDateValues.month,
+                          dc.range.track[this.id]
+                        );
                       } else {
-                        ev.stopPropagation();
+                        // Selection in current month, just adjust the date
+                        dc.date.setDate(dc.range.track[this.id]);
+                      }
+
+                      dc.setCurrent(dc);
+
+                      if (
+                        $A.hasClass(this, "selected") ||
+                        (!commentsEnabled && !$A.hasClass(this, "comment"))
+                      ) {
+                        if (!$A.data(this, "disabled")) {
+                          $A.extend(true, dc.fn.current, dc.range.current);
+                          // Toggles for openOnFocus support.
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          dc.storeCurrentDate(dc);
+                          handleClick.apply(this, [ev, dc, targ]);
+                        } else {
+                          ev.stopPropagation();
+                          ev.preventDefault();
+                        }
+                      } else dc.setFocus(this);
+                      ev.preventDefault();
+                    },
+                    keydown: function(ev) {
+                      changePressed(ev);
+                      var k = ev.which || ev.keyCode;
+                      if (k === 13) {
+                        isKP = true;
+
+                        if (!$A.data(this, "disabled")) {
+                          $A.extend(true, dc.fn.current, dc.range.current);
+                          // Toggles for openOnFocus support.
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          dc.storeCurrentDate(dc);
+                          handleClick.apply(this, [ev, dc, targ]);
+                        }
+
                         ev.preventDefault();
-                      }
-                    } else dc.setFocus(this);
-                    ev.preventDefault();
-                  },
-                  keydown: function(ev) {
-                    changePressed(ev);
-                    var k = ev.which || ev.keyCode;
-                    if (k === 13) {
-                      isKP = true;
+                      } else if (
+                        k === 32 &&
+                        commentsEnabled &&
+                        config.editor &&
+                        config.editor.show &&
+                        !dc.children[1].openEditor
+                      ) {
+                        dc.children[1].openEditor = true;
+                        dc.children[1].reset();
+                        ev.preventDefault();
+                      } else if (
+                        (k >= 37 && k <= 40) ||
+                        k === 27 ||
+                        (k >= 33 && k <= 36)
+                      ) {
+                        var wd = dc.range.current.wDay;
 
-                      if (!$A.data(this, "disabled")) {
-                        $A.extend(true, dc.fn.current, dc.range.current);
-                        handleClick.apply(this, [ev, dc, targ]);
-                      }
+                        if (k === 37) {
+                          // Left arrow key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
 
-                      ev.preventDefault();
-                    } else if (
-                      k === 32 &&
-                      commentsEnabled &&
-                      config.editor &&
-                      config.editor.show &&
-                      !dc.children[1].openEditor
-                    ) {
-                      dc.children[1].openEditor = true;
-                      dc.children[1].reset();
-                      ev.preventDefault();
-                    } else if (
-                      (k >= 37 && k <= 40) ||
-                      k === 27 ||
-                      (k >= 33 && k <= 36)
-                    ) {
-                      var wd = dc.range.current.wDay;
+                          if (dc.range.current.mDay > 1) {
+                            dc.range.current.mDay--;
+                            dc.range.current.wDay = !wd ? 6 : wd - 1;
 
-                      if (k === 37) {
-                        // Left arrow key
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          } else if (
+                            dc.range.current.mDay === 1 &&
+                            !$A.data(dc.buttons.pM, "disabled")
+                          ) {
+                            var dateValues = dc.modifyDateValues(
+                              {
+                                month: dc.range.current.month,
+                                year: dc.range.current.year
+                              },
+                              {
+                                month: -1
+                              }
+                            );
 
-                        if (dc.range.current.mDay > 1) {
-                          dc.range.current.mDay--;
-                          dc.range.current.wDay = !wd ? 6 : wd - 1;
+                            var day = dc.range[dateValues.month].max;
 
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
-                        } else if (
-                          dc.range.current.mDay === 1 &&
-                          !$A.data(dc.buttons.pM, "disabled")
-                        ) {
-                          var dateValues = dc.modifyDateValues(
-                            {
-                              month: dc.range.current.month,
-                              year: dc.range.current.year
-                            },
-                            {
-                              month: -1
-                            }
-                          );
+                            if (dateValues.month === 1)
+                              day =
+                                new Date(dateValues.year, 1, 29).getMonth() ===
+                                1
+                                  ? 29
+                                  : 28;
 
-                          var day = dc.range[dateValues.month].max;
-
-                          if (dateValues.month === 1)
-                            day =
-                              new Date(dateValues.year, 1, 29).getMonth() === 1
-                                ? 29
-                                : 28;
-
-                          dc.date = new Date(
-                            dateValues.year,
-                            dateValues.month,
-                            day
-                          );
-                          dc.setCurrent(dc);
-                          dc.reopen = true;
-                          dc.open();
-                        }
-                      } else if (k === 39) {
-                        // Right arrow key
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                        if (
-                          dc.range.current.mDay <
-                          dc.range[dc.range.current.month].max
-                        ) {
-                          dc.range.current.mDay++;
-                          dc.range.current.wDay = wd === 6 ? 0 : wd + 1;
-
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
-                        } else if (
-                          dc.range.current.mDay ==
-                            dc.range[dc.range.current.month].max &&
-                          !$A.data(dc.buttons.nM, "disabled")
-                        ) {
-                          var dateValues = dc.modifyDateValues(
-                            {
-                              month: dc.range.current.month,
-                              year: dc.range.current.year
-                            },
-                            {
-                              month: 1
-                            }
-                          );
-
-                          dc.date = new Date(
-                            dateValues.year,
-                            dateValues.month,
-                            1
-                          );
-                          dc.setCurrent(dc);
-                          dc.reopen = true;
-                          dc.open();
-                        }
-                      } else if (k === 38) {
-                        // Up arrow key
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                        if (dc.range.current.mDay - 7 > 0) {
-                          dc.range.current.mDay -= 7;
-
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
-                        } else if (!$A.data(dc.buttons.pM, "disabled")) {
-                          // Go to previous month
-                          var dateValues = dc.modifyDateValues(
-                            {
-                              month: dc.range.current.month,
-                              year: dc.range.current.year
-                            },
-                            {
-                              month: -1
-                            }
-                          );
+                            dc.date = new Date(
+                              dateValues.year,
+                              dateValues.month,
+                              day
+                            );
+                            dc.setCurrent(dc);
+                            dc.reopen = true;
+                            dc.open();
+                          }
+                        } else if (k === 39) {
+                          // Right arrow key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
 
                           if (
-                            dateValues.month === 1 &&
-                            new Date(dateValues.year, 1, 29).getMonth() === 1
-                          )
-                            dc.range[dateValues.month].max = 29;
-                          else if (dateValues.month === 1)
-                            dc.range[dateValues.month].max = 28;
+                            dc.range.current.mDay <
+                            dc.range[dc.range.current.month].max
+                          ) {
+                            dc.range.current.mDay++;
+                            dc.range.current.wDay = wd === 6 ? 0 : wd + 1;
 
-                          var day =
-                              dc.range[dateValues.month].max +
-                              (dc.range.current.mDay - 7),
-                            intendedDate = new Date(
-                              dateValues.year,
-                              dateValues.month,
-                              day
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          } else if (
+                            dc.range.current.mDay ==
+                              dc.range[dc.range.current.month].max &&
+                            !$A.data(dc.buttons.nM, "disabled")
+                          ) {
+                            var dateValues = dc.modifyDateValues(
+                              {
+                                month: dc.range.current.month,
+                                year: dc.range.current.year
+                              },
+                              {
+                                month: 1
+                              }
                             );
 
-                          // If intended selected date one month previous is outside of date range, do not attempt
-                          // to select the date cell
-                          if (!dc.isOutsideDateRange(intendedDate)) {
-                            dc.date = intendedDate;
+                            dc.date = new Date(
+                              dateValues.year,
+                              dateValues.month,
+                              1
+                            );
                             dc.setCurrent(dc);
                             dc.reopen = true;
                             dc.open();
                           }
+                        } else if (k === 38) {
+                          // Up arrow key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (dc.range.current.mDay - 7 > 0) {
+                            dc.range.current.mDay -= 7;
+
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          } else if (!$A.data(dc.buttons.pM, "disabled")) {
+                            // Go to previous month
+                            var dateValues = dc.modifyDateValues(
+                              {
+                                month: dc.range.current.month,
+                                year: dc.range.current.year
+                              },
+                              {
+                                month: -1
+                              }
+                            );
+
+                            if (
+                              dateValues.month === 1 &&
+                              new Date(dateValues.year, 1, 29).getMonth() === 1
+                            )
+                              dc.range[dateValues.month].max = 29;
+                            else if (dateValues.month === 1)
+                              dc.range[dateValues.month].max = 28;
+
+                            var day =
+                                dc.range[dateValues.month].max +
+                                (dc.range.current.mDay - 7),
+                              intendedDate = new Date(
+                                dateValues.year,
+                                dateValues.month,
+                                day
+                              );
+
+                            // If intended selected date one month previous is outside of date range, do not attempt
+                            // to select the date cell
+                            if (!dc.isOutsideDateRange(intendedDate)) {
+                              dc.date = intendedDate;
+                              dc.setCurrent(dc);
+                              dc.reopen = true;
+                              dc.open();
+                            }
+                          }
+                        } else if (k === 40) {
+                          // Down arrow key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (
+                            dc.range.current.mDay + 7 <=
+                            dc.range[dc.range.current.month].max
+                          ) {
+                            dc.range.current.mDay += 7;
+
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          } else if (!$A.data(dc.buttons.nM, "disabled")) {
+                            // Go to next month
+                            var dateValues = dc.modifyDateValues(
+                              {
+                                month: dc.range.current.month,
+                                year: dc.range.current.year
+                              },
+                              {
+                                month: 1
+                              }
+                            );
+
+                            var day =
+                                dc.range.current.mDay +
+                                7 -
+                                dc.range[dc.range.current.month].max,
+                              intendedDate = new Date(
+                                dateValues.year,
+                                dateValues.month,
+                                day
+                              );
+
+                            // If intended selected date one month ahead is outside of date range, do not attempt
+                            // to select the date cell
+                            if (!dc.isOutsideDateRange(intendedDate)) {
+                              dc.date = intendedDate;
+                              dc.setCurrent(dc);
+                              dc.reopen = true;
+                              dc.open();
+                            }
+                          }
+                        } else if (k === 27) {
+                          // Esc key
+                          dc.close();
+                          // Toggles for openOnFocus support.
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          $A.focus(targ);
+                        } else if (k === 33) {
+                          // PageUp key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (dc.pageUpDownNatural) {
+                            if (pressed.alt) {
+                              gYear(false);
+                            } else {
+                              pMonth();
+                            }
+                          } else {
+                            if (pressed.alt) {
+                              gYear(true);
+                            } else {
+                              nMonth();
+                            }
+                          }
+                        } else if (k === 34) {
+                          // PageDown key
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (dc.pageUpDownNatural) {
+                            if (pressed.alt) {
+                              gYear(true);
+                            } else {
+                              nMonth();
+                            }
+                          } else {
+                            if (pressed.alt) {
+                              gYear(false);
+                            } else {
+                              pMonth();
+                            }
+                          }
+                        } else if (k === 36) {
+                          // Home key (goes to the first day of the row)
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (wd !== dc.iterS && dc.range.current.mDay > 1) {
+                            while (
+                              dc.range.current.wDay !== dc.iterS &&
+                              $A.getEl(dc.baseId + (dc.range.current.mDay - 1))
+                            ) {
+                              dc.range.current.wDay =
+                                dc.range.current.wDay - 1 < 0
+                                  ? 6
+                                  : dc.range.current.wDay - 1;
+                              dc.range.current.mDay--;
+                            }
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          }
+                        } else if (k === 35) {
+                          // End key (goes to the last day of the row)
+                          $A.extend(true, dc.prevCurrent, dc.range.current);
+
+                          if (
+                            wd !== dc.iterE &&
+                            dc.range.current.mDay <
+                              dc.range[dc.range.current.month].max
+                          ) {
+                            while (
+                              dc.range.current.wDay !== dc.iterE &&
+                              $A.getEl(dc.baseId + (dc.range.current.mDay + 1))
+                            ) {
+                              dc.range.current.wDay =
+                                dc.range.current.wDay + 1 > 6
+                                  ? 0
+                                  : dc.range.current.wDay + 1;
+                              dc.range.current.mDay++;
+                            }
+                            dc.setFocus(
+                              dc.range.index[dc.range.current.mDay - 1],
+                              this
+                            );
+                          }
                         }
-                      } else if (k === 40) {
-                        // Down arrow key
+                        ev.preventDefault();
+                      } else if (
+                        k === 9 &&
+                        !pressed.alt &&
+                        !pressed.ctrl &&
+                        !pressed.shift
+                      ) {
+                        // Tab key (without any simultaneous modifiers Alt / Ctrl / Shift)
                         $A.extend(true, dc.prevCurrent, dc.range.current);
 
-                        if (
-                          dc.range.current.mDay + 7 <=
-                          dc.range[dc.range.current.month].max
-                        ) {
-                          dc.range.current.mDay += 7;
+                        // Reconfigured for Esc btn processing
+                        if (!dc.showEscBtn) {
+                          if (
+                            !config.condenseYear &&
+                            !$A.data(dc.buttons.pY, "disabled")
+                          )
+                            dc.buttons.pY.focus();
+                          else if (
+                            !config.condenseYear &&
+                            !$A.data(dc.buttons.nY, "disabled")
+                          )
+                            dc.buttons.nY.focus();
+                          else if (!$A.data(dc.buttons.pM, "disabled"))
+                            dc.buttons.pM.focus();
+                          else if (!$A.data(dc.buttons.nM, "disabled"))
+                            dc.buttons.nM.focus();
 
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
-                        } else if (!$A.data(dc.buttons.nM, "disabled")) {
-                          // Go to next month
-                          var dateValues = dc.modifyDateValues(
-                            {
-                              month: dc.range.current.month,
-                              year: dc.range.current.year
-                            },
-                            {
-                              month: 1
-                            }
-                          );
+                          ev.preventDefault();
+                        }
+                      } else if (
+                        k === 9 &&
+                        !pressed.alt &&
+                        !pressed.ctrl &&
+                        pressed.shift
+                      ) {
+                        // Tab key (with simultaneous Shift modifier)
+                        $A.extend(true, dc.prevCurrent, dc.range.current);
 
-                          var day =
-                              dc.range.current.mDay +
-                              7 -
-                              dc.range[dc.range.current.month].max,
-                            intendedDate = new Date(
-                              dateValues.year,
-                              dateValues.month,
-                              day
-                            );
+                        if (!$A.data(dc.buttons.nM, "disabled"))
+                          dc.buttons.nM.focus();
+                        else if (!$A.data(dc.buttons.pM, "disabled"))
+                          dc.buttons.pM.focus();
+                        else if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.nY, "disabled")
+                        )
+                          dc.buttons.nY.focus();
+                        else if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.pY, "disabled")
+                        )
+                          dc.buttons.pY.focus();
 
-                          // If intended selected date one month ahead is outside of date range, do not attempt
-                          // to select the date cell
-                          if (!dc.isOutsideDateRange(intendedDate)) {
-                            dc.date = intendedDate;
-                            dc.setCurrent(dc);
-                            dc.reopen = true;
-                            dc.open();
+                        ev.preventDefault();
+                      }
+                    },
+                    keyup: function(ev) {
+                      changePressed(ev);
+                      var k = ev.which || ev.keyCode;
+
+                      if (k === 13 && !isKP && !dc.isAdd) {
+                        if (!$A.data(this, "disabled")) {
+                          $A.extend(true, dc.fn.current, dc.range.current);
+
+                          if (!dc.setFocus.firstOpen) {
+                            // Toggles for openOnFocus support.
+                            onFocusInit = false;
+                            onFocusTraverse = true;
+                            dc.storeCurrentDate(dc);
+                            handleClick.apply(this, [ev, dc, targ]);
                           }
                         }
-                      } else if (k === 27) {
-                        // Esc key
+
+                        ev.preventDefault();
+                      }
+
+                      isKP = dc.setFocus.firstOpen = dc.isAdd = false;
+                    }
+                  },
+                  null,
+                  "." + baseId
+                );
+
+                // Reconfigured for Esc btn processing
+                if (dc.showEscBtn) {
+                  $A.on(
+                    dc.escBtn,
+                    {
+                      click: function(ev) {
                         dc.close();
-                        // Toggles for openOnFocus support.
                         onFocusInit = false;
                         onFocusTraverse = true;
                         $A.focus(targ);
-                      } else if (k === 33) {
-                        // PageUp key
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
+                        ev.preventDefault();
+                      },
+                      keydown: function(ev) {
+                        changePressed(ev);
+                        var k = ev.which || ev.keyCode;
 
-                        if (dc.pageUpDownNatural) {
-                          if (pressed.alt) {
-                            gYear(false);
-                          } else {
-                            pMonth();
-                          }
-                        } else {
-                          if (pressed.alt) {
-                            gYear(true);
-                          } else {
-                            nMonth();
-                          }
-                        }
-                      } else if (k === 34) {
-                        // PageDown key
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                        if (dc.pageUpDownNatural) {
-                          if (pressed.alt) {
-                            gYear(true);
-                          } else {
-                            nMonth();
-                          }
-                        } else {
-                          if (pressed.alt) {
-                            gYear(false);
-                          } else {
-                            pMonth();
-                          }
-                        }
-                      } else if (k === 36) {
-                        // Home key (goes to the first day of the row)
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                        if (wd !== dc.iterS && dc.range.current.mDay > 1) {
-                          while (
-                            dc.range.current.wDay !== dc.iterS &&
-                            $A.getEl(dc.baseId + (dc.range.current.mDay - 1))
-                          ) {
-                            dc.range.current.wDay =
-                              dc.range.current.wDay - 1 < 0
-                                ? 6
-                                : dc.range.current.wDay - 1;
-                            dc.range.current.mDay--;
-                          }
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
-                        }
-                      } else if (k === 35) {
-                        // End key (goes to the last day of the row)
-                        $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                        if (
-                          wd !== dc.iterE &&
-                          dc.range.current.mDay <
-                            dc.range[dc.range.current.month].max
+                        if (k === 27 || k === 13 || k === 32) {
+                          dc.close();
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          $A.focus(targ);
+                        } else if (
+                          k === 9 &&
+                          !pressed.alt &&
+                          !pressed.ctrl &&
+                          !pressed.shift
                         ) {
-                          while (
-                            dc.range.current.wDay !== dc.iterE &&
-                            $A.getEl(dc.baseId + (dc.range.current.mDay + 1))
-                          ) {
-                            dc.range.current.wDay =
-                              dc.range.current.wDay + 1 > 6
-                                ? 0
-                                : dc.range.current.wDay + 1;
-                            dc.range.current.mDay++;
+                          // Tab key (without any simultaneous modifiers Alt / Ctrl / Shift)
+
+                          if (dc.showEscBtn) {
+                            if (
+                              !config.condenseYear &&
+                              !$A.data(dc.buttons.pY, "disabled")
+                            )
+                              dc.buttons.pY.focus();
+                            else if (
+                              !config.condenseYear &&
+                              !$A.data(dc.buttons.nY, "disabled")
+                            )
+                              dc.buttons.nY.focus();
+                            else if (!$A.data(dc.buttons.pM, "disabled"))
+                              dc.buttons.pM.focus();
+                            else if (!$A.data(dc.buttons.nM, "disabled"))
+                              dc.buttons.nM.focus();
                           }
-                          dc.setFocus(
-                            dc.range.index[dc.range.current.mDay - 1],
-                            this
-                          );
+
+                          ev.preventDefault();
                         }
-                      }
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      !pressed.shift
-                    ) {
-                      // Tab key (without any simultaneous modifiers Alt / Ctrl / Shift)
-                      $A.extend(true, dc.prevCurrent, dc.range.current);
+                      },
+                      keyup: function(ev) {
+                        changePressed(ev);
+                      },
+                      focus: function(ev) {},
+                      blur: function(ev) {}
+                    },
+                    null,
+                    "." + baseId
+                  );
+                }
 
-                      if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.pY, "disabled")
-                      )
-                        dc.buttons.pY.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.nY, "disabled")
-                      )
-                        dc.buttons.nY.focus();
-                      else if (!$A.data(dc.buttons.pM, "disabled"))
-                        dc.buttons.pM.focus();
-                      else if (!$A.data(dc.buttons.nM, "disabled"))
-                        dc.buttons.nM.focus();
-
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      pressed.shift
-                    ) {
-                      // Tab key (with simultaneous Shift modifier)
-                      $A.extend(true, dc.prevCurrent, dc.range.current);
-
-                      if (!$A.data(dc.buttons.nM, "disabled"))
-                        dc.buttons.nM.focus();
-                      else if (!$A.data(dc.buttons.pM, "disabled"))
-                        dc.buttons.pM.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.nY, "disabled")
-                      )
-                        dc.buttons.nY.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.pY, "disabled")
-                      )
-                        dc.buttons.pY.focus();
-
-                      ev.preventDefault();
-                    }
-                  },
-                  keyup: function(ev) {
-                    changePressed(ev);
-                    var k = ev.which || ev.keyCode;
-
-                    if (k === 13 && !isKP && !dc.isAdd) {
-                      if (!$A.data(this, "disabled")) {
-                        $A.extend(true, dc.fn.current, dc.range.current);
-
-                        if (!dc.setFocus.firstOpen)
-                          handleClick.apply(this, [ev, dc, targ]);
-                      }
-
-                      ev.preventDefault();
-                    }
-
-                    isKP = dc.setFocus.firstOpen = dc.isAdd = false;
-                  }
-                });
-
-                $A.on(dc.buttons.pM, {
-                  click: function(ev) {
-                    dc.navBtn = "PM";
-                    pMonth();
-                    ev.preventDefault();
-                  },
-                  keydown: function(ev) {
-                    changePressed(ev);
-                    var k = ev.which || ev.keyCode;
-
-                    if (k === 13 || k === 32) {
+                $A.on(
+                  dc.buttons.pM,
+                  {
+                    click: function(ev) {
                       dc.navBtn = "PM";
                       pMonth();
                       ev.preventDefault();
-                    } else if (k === 27) {
-                      dc.close();
-                      // Toggles for openOnFocus support.
-                      onFocusInit = false;
-                      onFocusTraverse = true;
-                      $A.focus(targ);
-                      ev.preventDefault();
-                    } else if (!config.condenseYear && k === 38) {
-                      dc.buttons.pY.focus();
-                      ev.preventDefault();
-                    } else if (k === 39) {
-                      dc.buttons.nM.focus();
-                      ev.preventDefault();
-                    } else if (k === 37 || k === 40) {
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      !pressed.shift
-                    ) {
-                      if (!$A.data(dc.buttons.nM, "disabled"))
-                        dc.buttons.nM.focus();
-                      else
-                        $A.query(
-                          'td.day[tabindex="0"]',
-                          dc.container
-                        )[0].focus();
+                    },
+                    keydown: function(ev) {
+                      changePressed(ev);
+                      var k = ev.which || ev.keyCode;
 
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      pressed.shift
-                    ) {
-                      if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.nY, "disabled")
-                      )
-                        dc.buttons.nY.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.pY, "disabled")
-                      )
+                      if (k === 13 || k === 32) {
+                        dc.navBtn = "PM";
+                        pMonth();
+                        ev.preventDefault();
+                      } else if (k === 27) {
+                        dc.close();
+                        // Toggles for openOnFocus support.
+                        onFocusInit = false;
+                        onFocusTraverse = true;
+                        $A.focus(targ);
+                        ev.preventDefault();
+                      } else if (!config.condenseYear && k === 38) {
                         dc.buttons.pY.focus();
-                      else
-                        $A.query(
-                          'td.day[tabindex="0"]',
-                          dc.container
-                        )[0].focus();
+                        ev.preventDefault();
+                      } else if (k === 39) {
+                        dc.buttons.nM.focus();
+                        ev.preventDefault();
+                      } else if (k === 37 || k === 40) {
+                        ev.preventDefault();
+                      } else if (
+                        k === 9 &&
+                        !pressed.alt &&
+                        !pressed.ctrl &&
+                        !pressed.shift
+                      ) {
+                        if (!$A.data(dc.buttons.nM, "disabled"))
+                          dc.buttons.nM.focus();
+                        else dc.query('td.day[tabindex="0"]')[0].focus();
 
-                      ev.preventDefault();
+                        ev.preventDefault();
+                      } else if (
+                        k === 9 &&
+                        !pressed.alt &&
+                        !pressed.ctrl &&
+                        pressed.shift
+                      ) {
+                        if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.nY, "disabled")
+                        )
+                          dc.buttons.nY.focus();
+                        else if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.pY, "disabled")
+                        )
+                          dc.buttons.pY.focus();
+                        else {
+                          // Reconfigured for Esc btn processing
+                          if (dc.showEscBtn) dc.escBtn.focus();
+                          else dc.query('td.day[tabindex="0"]')[0].focus();
+                        }
+
+                        ev.preventDefault();
+                      }
+                    },
+                    keyup: function(ev) {
+                      changePressed(ev);
                     }
                   },
-                  keyup: function(ev) {
-                    changePressed(ev);
-                  }
-                });
-                $A.on(dc.buttons.nM, {
-                  click: function(ev) {
-                    dc.navBtn = "NM";
-                    nMonth();
-                    ev.preventDefault();
-                  },
-                  keydown: function(ev) {
-                    changePressed(ev);
-                    var k = ev.which || ev.keyCode;
-
-                    if (k === 13 || k === 32) {
+                  null,
+                  "." + baseId
+                );
+                $A.on(
+                  dc.buttons.nM,
+                  {
+                    click: function(ev) {
                       dc.navBtn = "NM";
                       nMonth();
                       ev.preventDefault();
-                    } else if (k === 27) {
-                      dc.close();
-                      // Toggles for openOnFocus support.
-                      onFocusInit = false;
-                      onFocusTraverse = true;
-                      $A.focus(targ);
-                      ev.preventDefault();
-                    } else if (!config.condenseYear && k === 38) {
-                      dc.buttons.nY.focus();
-                      ev.preventDefault();
-                    } else if (k === 37) {
-                      dc.buttons.pM.focus();
-                      ev.preventDefault();
-                    } else if (k === 39 || k === 40) {
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      !pressed.shift
-                    ) {
-                      $A.query('td.day[tabindex="0"]', dc.container)[0].focus();
-                      ev.preventDefault();
-                    } else if (
-                      k === 9 &&
-                      !pressed.alt &&
-                      !pressed.ctrl &&
-                      pressed.shift
-                    ) {
-                      if (!$A.data(dc.buttons.pM, "disabled"))
-                        dc.buttons.pM.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.nY, "disabled")
-                      )
-                        dc.buttons.nY.focus();
-                      else if (
-                        !config.condenseYear &&
-                        !$A.data(dc.buttons.pY, "disabled")
-                      )
-                        dc.buttons.pY.focus();
-                      else
-                        $A.query(
-                          'td.day[tabindex="0"]',
-                          dc.container
-                        )[0].focus();
-
-                      ev.preventDefault();
-                    }
-                  },
-                  keyup: function(ev) {
-                    changePressed(ev);
-                  }
-                });
-
-                if (!config.condenseYear)
-                  $A.on(dc.buttons.pY, {
-                    click: function(ev) {
-                      dc.navBtn = "PY";
-                      gYear();
-                      ev.preventDefault();
                     },
                     keydown: function(ev) {
                       changePressed(ev);
                       var k = ev.which || ev.keyCode;
 
                       if (k === 13 || k === 32) {
-                        dc.navBtn = "PY";
-                        gYear();
+                        dc.navBtn = "NM";
+                        nMonth();
                         ev.preventDefault();
                       } else if (k === 27) {
                         dc.close();
@@ -1969,13 +2051,13 @@ export function loadAccCalendarModule() {
                         onFocusTraverse = true;
                         $A.focus(targ);
                         ev.preventDefault();
-                      } else if (k === 39) {
+                      } else if (!config.condenseYear && k === 38) {
                         dc.buttons.nY.focus();
                         ev.preventDefault();
-                      } else if (k === 40) {
+                      } else if (k === 37) {
                         dc.buttons.pM.focus();
                         ev.preventDefault();
-                      } else if (k === 37 || k === 38) {
+                      } else if (k === 39 || k === 40) {
                         ev.preventDefault();
                       } else if (
                         k === 9 &&
@@ -1983,97 +2065,31 @@ export function loadAccCalendarModule() {
                         !pressed.ctrl &&
                         !pressed.shift
                       ) {
-                        if (!$A.data(dc.buttons.nY, "disabled"))
-                          dc.buttons.nY.focus();
-                        else if (!$A.data(dc.buttons.pM, "disabled"))
-                          dc.buttons.pM.focus();
-                        else if (!$A.data(dc.buttons.nM, "disabled"))
-                          dc.buttons.nM.focus();
-                        else
-                          $A.query(
-                            'td.day[tabindex="0"]',
-                            dc.container
-                          )[0].focus();
-
+                        dc.query('td.day[tabindex="0"]')[0].focus();
                         ev.preventDefault();
                       } else if (
                         k === 9 &&
                         !pressed.alt &&
                         !pressed.ctrl &&
                         pressed.shift
-                      ) {
-                        $A.query(
-                          'td.day[tabindex="0"]',
-                          dc.container
-                        )[0].focus();
-                        ev.preventDefault();
-                      }
-                    },
-                    keyup: function(ev) {
-                      changePressed(ev);
-                    }
-                  });
-
-                if (!config.condenseYear)
-                  $A.on(dc.buttons.nY, {
-                    click: function(ev) {
-                      dc.navBtn = "NY";
-                      gYear(true);
-                      ev.preventDefault();
-                    },
-                    keydown: function(ev) {
-                      changePressed(ev);
-                      var k = ev.which || ev.keyCode;
-
-                      if (k === 13 || k === 32) {
-                        dc.navBtn = "NY";
-                        gYear(true);
-                        ev.preventDefault();
-                      } else if (k === 27) {
-                        dc.close();
-                        // Toggles for openOnFocus support.
-                        onFocusInit = false;
-                        onFocusTraverse = true;
-                        $A.focus(targ);
-                        ev.preventDefault();
-                      } else if (k === 37) {
-                        dc.buttons.pY.focus();
-                        ev.preventDefault();
-                      } else if (k === 40) {
-                        dc.buttons.nM.focus();
-                        ev.preventDefault();
-                      } else if (k === 38 || k === 39) {
-                        ev.preventDefault();
-                      } else if (
-                        k === 9 &&
-                        !pressed.alt &&
-                        !pressed.ctrl &&
-                        !pressed.shift
                       ) {
                         if (!$A.data(dc.buttons.pM, "disabled"))
                           dc.buttons.pM.focus();
-                        else if (!$A.data(dc.buttons.nM, "disabled"))
-                          dc.buttons.nM.focus();
-                        else
-                          $A.query(
-                            'td.day[tabindex="0"]',
-                            dc.container
-                          )[0].focus();
-
-                        ev.preventDefault();
-                      } else if (
-                        k === 9 &&
-                        !pressed.alt &&
-                        !pressed.ctrl &&
-                        pressed.shift
-                      ) {
-                        if (!$A.data(dc.buttons.pY, "disabled"))
+                        else if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.nY, "disabled")
+                        )
+                          dc.buttons.nY.focus();
+                        else if (
+                          !config.condenseYear &&
+                          !$A.data(dc.buttons.pY, "disabled")
+                        )
                           dc.buttons.pY.focus();
-                        else
-                          $A.query(
-                            'td.day[tabindex="0"]',
-                            dc.container
-                          )[0].focus();
+                        else {
+                          // Reconfigured for Esc btn processing
+                          if (dc.showEscBtn) dc.escBtn.focus();
+                          else dc.query('td.day[tabindex="0"]')[0].focus();
+                        }
 
                         ev.preventDefault();
                       }
@@ -2081,9 +2097,149 @@ export function loadAccCalendarModule() {
                     keyup: function(ev) {
                       changePressed(ev);
                     }
-                  });
+                  },
+                  null,
+                  "." + baseId
+                );
 
-                dc.range.index = $A.query("td.dayInMonth", dc.container);
+                if (!config.condenseYear)
+                  $A.on(
+                    dc.buttons.pY,
+                    {
+                      click: function(ev) {
+                        dc.navBtn = "PY";
+                        gYear();
+                        ev.preventDefault();
+                      },
+                      keydown: function(ev) {
+                        changePressed(ev);
+                        var k = ev.which || ev.keyCode;
+
+                        if (k === 13 || k === 32) {
+                          dc.navBtn = "PY";
+                          gYear();
+                          ev.preventDefault();
+                        } else if (k === 27) {
+                          dc.close();
+                          // Toggles for openOnFocus support.
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          $A.focus(targ);
+                          ev.preventDefault();
+                        } else if (k === 39) {
+                          dc.buttons.nY.focus();
+                          ev.preventDefault();
+                        } else if (k === 40) {
+                          dc.buttons.pM.focus();
+                          ev.preventDefault();
+                        } else if (k === 37 || k === 38) {
+                          ev.preventDefault();
+                        } else if (
+                          k === 9 &&
+                          !pressed.alt &&
+                          !pressed.ctrl &&
+                          !pressed.shift
+                        ) {
+                          if (!$A.data(dc.buttons.nY, "disabled"))
+                            dc.buttons.nY.focus();
+                          else if (!$A.data(dc.buttons.pM, "disabled"))
+                            dc.buttons.pM.focus();
+                          else if (!$A.data(dc.buttons.nM, "disabled"))
+                            dc.buttons.nM.focus();
+                          else dc.query('td.day[tabindex="0"]')[0].focus();
+
+                          ev.preventDefault();
+                        } else if (
+                          k === 9 &&
+                          !pressed.alt &&
+                          !pressed.ctrl &&
+                          pressed.shift
+                        ) {
+                          // Reconfigured for Esc btn processing
+                          if (dc.showEscBtn) dc.escBtn.focus();
+                          else dc.query('td.day[tabindex="0"]')[0].focus();
+                          ev.preventDefault();
+                        }
+                      },
+                      keyup: function(ev) {
+                        changePressed(ev);
+                      }
+                    },
+                    null,
+                    "." + baseId
+                  );
+
+                if (!config.condenseYear)
+                  $A.on(
+                    dc.buttons.nY,
+                    {
+                      click: function(ev) {
+                        dc.navBtn = "NY";
+                        gYear(true);
+                        ev.preventDefault();
+                      },
+                      keydown: function(ev) {
+                        changePressed(ev);
+                        var k = ev.which || ev.keyCode;
+
+                        if (k === 13 || k === 32) {
+                          dc.navBtn = "NY";
+                          gYear(true);
+                          ev.preventDefault();
+                        } else if (k === 27) {
+                          dc.close();
+                          // Toggles for openOnFocus support.
+                          onFocusInit = false;
+                          onFocusTraverse = true;
+                          $A.focus(targ);
+                          ev.preventDefault();
+                        } else if (k === 37) {
+                          dc.buttons.pY.focus();
+                          ev.preventDefault();
+                        } else if (k === 40) {
+                          dc.buttons.nM.focus();
+                          ev.preventDefault();
+                        } else if (k === 38 || k === 39) {
+                          ev.preventDefault();
+                        } else if (
+                          k === 9 &&
+                          !pressed.alt &&
+                          !pressed.ctrl &&
+                          !pressed.shift
+                        ) {
+                          if (!$A.data(dc.buttons.pM, "disabled"))
+                            dc.buttons.pM.focus();
+                          else if (!$A.data(dc.buttons.nM, "disabled"))
+                            dc.buttons.nM.focus();
+                          else dc.query('td.day[tabindex="0"]')[0].focus();
+
+                          ev.preventDefault();
+                        } else if (
+                          k === 9 &&
+                          !pressed.alt &&
+                          !pressed.ctrl &&
+                          pressed.shift
+                        ) {
+                          if (!$A.data(dc.buttons.pY, "disabled"))
+                            dc.buttons.pY.focus();
+                          else {
+                            // Reconfigured for Esc btn processing
+                            if (dc.showEscBtn) dc.escBtn.focus();
+                            else dc.query('td.day[tabindex="0"]')[0].focus();
+                          }
+
+                          ev.preventDefault();
+                        }
+                      },
+                      keyup: function(ev) {
+                        changePressed(ev);
+                      }
+                    },
+                    null,
+                    "." + baseId
+                  );
+
+                dc.range.index = dc.query("td.dayInMonth");
                 dc.setFocus.firstOpen = true;
 
                 dc.setFocus(dc.range.index[dc.range.current.mDay - 1]);
@@ -2105,12 +2261,14 @@ export function loadAccCalendarModule() {
                       (config.openOnFocus === true &&
                         !onFocusInit &&
                         onFocusTraverse)
-                    )
-                      $A.announce(dc.helpText);
+                    ) {
+                      if (!dc.setFocus.firstOpen) $A.announce(dc.helpTextShort);
+                    }
                   }
                 }
                 dc.navBtnS = false;
               },
+              helpTextShort: helpTextShort,
               helpText: helpText,
               runAfterClose: function(dc) {
                 if (!dc.reopen) {
@@ -2279,39 +2437,44 @@ export function loadAccCalendarModule() {
                   dc.parent.range[dc.parent.range.current.month].comments;
 
                 if (!dc.textarea)
-                  dc.textarea = $A.query("textarea", dc.container, function() {
+                  dc.textarea = dc.query("textarea", function() {
                     $A.css(this, {
                       visibility: "",
                       display: ""
                     });
 
                     dc.css("left", dc.parent.outerNode.offsetLeft);
-                    $A.on(this, {
-                      focus: function(ev) {
-                        if (dc.parent.children[0].loaded)
-                          dc.parent.children[0].close();
-                      },
-                      keydown: function(ev) {
-                        var k = ev.which || ev.keyCode;
+                    $A.on(
+                      this,
+                      {
+                        focus: function(ev) {
+                          if (dc.parent.children[0].loaded)
+                            dc.parent.children[0].close();
+                        },
+                        keydown: function(ev) {
+                          var k = ev.which || ev.keyCode;
 
-                        if (this.value.length > 800)
-                          this.value = this.value.substring(0, 799);
+                          if (this.value.length > 800)
+                            this.value = this.value.substring(0, 799);
 
-                        if (k === 13) {
-                          dc.parent.isAdd = true;
-                          dc.add.apply(this, [dc]);
-                          dc.parent.current.focus();
-                          dc.openEditor = false;
-                          dc.reset();
-                          ev.preventDefault();
-                        } else if (k === 27) {
-                          dc.parent.current.focus();
-                          dc.openEditor = false;
-                          dc.reset();
-                          ev.preventDefault();
+                          if (k === 13) {
+                            dc.parent.isAdd = true;
+                            dc.add.apply(this, [dc]);
+                            dc.parent.current.focus();
+                            dc.openEditor = false;
+                            dc.reset();
+                            ev.preventDefault();
+                          } else if (k === 27) {
+                            dc.parent.current.focus();
+                            dc.openEditor = false;
+                            dc.reset();
+                            ev.preventDefault();
+                          }
                         }
-                      }
-                    });
+                      },
+                      null,
+                      "." + baseId
+                    );
                   })[0];
                 else {
                   $A.css(dc.textarea, {
@@ -2373,58 +2536,67 @@ export function loadAccCalendarModule() {
               }
             },
             runAfter: function(dc) {
-              $A.query("button", dc.container, function() {
+              dc.query("button", function() {
                 dc.commentBtn = this;
-                $A.on(this, {
-                  focus: function(ev) {
-                    if (dc.parent.children[0].loaded)
-                      dc.parent.children[0].close();
-                  },
-                  click: function(ev) {
-                    if (dc.openEditor) {
-                      dc.parent.isAdd = true;
-                      dc.add.apply(this, [dc]);
-                      dc.parent.current.focus();
-                      dc.openEditor = false;
-                      dc.reset();
-                    } else {
-                      dc.openEditor = true;
-                      dc.reset();
-                    }
-                    ev.preventDefault();
-                  },
-                  keydown: function(ev) {
-                    var k = ev.which || ev.keyCode;
-
-                    if (k === 27) {
+                $A.on(
+                  this,
+                  {
+                    focus: function(ev) {
+                      if (dc.parent.children[0].loaded)
+                        dc.parent.children[0].close();
+                    },
+                    click: function(ev) {
                       if (dc.openEditor) {
+                        dc.parent.isAdd = true;
+                        dc.add.apply(this, [dc]);
                         dc.parent.current.focus();
                         dc.openEditor = false;
                         dc.reset();
+                      } else {
+                        dc.openEditor = true;
+                        dc.reset();
                       }
-
                       ev.preventDefault();
+                    },
+                    keydown: function(ev) {
+                      var k = ev.which || ev.keyCode;
+
+                      if (k === 27) {
+                        if (dc.openEditor) {
+                          dc.parent.current.focus();
+                          dc.openEditor = false;
+                          dc.reset();
+                        }
+
+                        ev.preventDefault();
+                      }
                     }
-                  }
-                });
+                  },
+                  null,
+                  "." + baseId
+                );
               });
               dc.reset();
               dc.lock = true;
 
-              $A.on($A.query("textarea", dc.container)[0], "keydown", function(
-                ev
-              ) {
-                var k = ev.which || ev.keyCode;
+              $A.on(
+                dc.query("textarea")[0],
+                "keydown",
+                function(ev) {
+                  var k = ev.which || ev.keyCode;
 
-                if (k === 9 && !ev.altKey && !ev.ctrlKey && ev.shiftKey) {
-                  $A.query("button", dc.container)[0].focus();
-                  ev.preventDefault();
-                }
-              });
+                  if (k === 9 && !ev.altKey && !ev.ctrlKey && ev.shiftKey) {
+                    dc.query("button")[0].focus();
+                    ev.preventDefault();
+                  }
+                },
+                null,
+                "." + baseId
+              );
             },
             tabOut: function(ev, dc) {
               if (!$A.isTouch()) {
-                $A.query("textarea", dc.container)[0].focus();
+                dc.query("textarea")[0].focus();
                 return true;
               }
             },
@@ -2445,12 +2617,18 @@ export function loadAccCalendarModule() {
         ])[0];
         // Form object declaration end
 
-        $A.on(window, "resize." + baseId, function(ev) {
-          mainDC.setPosition();
-          commentDC.setPosition();
-          formDC.setPosition();
-          formDC.reset();
-        });
+        $A.on(
+          window,
+          "resize",
+          function(ev) {
+            mainDC.setPosition();
+            commentDC.setPosition();
+            formDC.setPosition();
+            formDC.reset();
+          },
+          null,
+          "." + baseId
+        );
 
         $A.setAttr(trigger, "aria-expanded", "false");
 
@@ -2461,7 +2639,7 @@ export function loadAccCalendarModule() {
             odcDel = false;
           },
           odcFn = function() {
-            if (!odcDel && !odc.loaded) {
+            if (!odcDel && !odc.loaded && !odc.disabled) {
               odcDel = true;
               // Toggles for openOnFocus support.
               onFocusInit = false;
@@ -2478,88 +2656,150 @@ export function loadAccCalendarModule() {
             }
           };
 
-        $A.on(trigger, {
-          click: function(ev) {
-            odcFn.call(this);
-            ev.preventDefault();
-          },
-          keydown: function(ev) {
-            var k = ev.which || ev.keyCode;
-
-            if (k === 32) {
+        $A.on(
+          trigger,
+          {
+            click: function(ev) {
               odcFn.call(this);
               ev.preventDefault();
-              ev.stopPropagation();
+            },
+            keydown: function(ev) {
+              var k = ev.which || ev.keyCode;
+
+              if (k === 32) {
+                odcFn.call(this);
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
             }
-          }
-        });
+          },
+          null,
+          "." + baseId
+        );
 
         // Toggles for openOnFocus support.
         if (config.openOnFocus === true) {
           $A.setAttr(targ, "aria-expanded", "false");
 
-          $A.on(targ, {
-            touchstart: function(ev) {
-              if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse) {
-                odcDel = true;
-                $A.trigger(trigger, "opendatepicker");
-                ev.preventDefault();
-                setTimeout(odcDelFn, 1000);
-              }
-            },
-            focus: function(ev) {
-              if (!odcDel && !odc.loaded && !onFocusInit && !onFocusTraverse) {
-                odcDel = true;
-                $A.trigger(trigger, "opendatepicker");
-                $A.announce(odc.openOnFocusHelpText);
-                setTimeout(odcDelFn, 1000);
-              }
-              onFocusInit = true;
-              onFocusTraverse = false;
-            },
-            blur: function(ev) {
-              onFocusInit = false;
-            },
-            keydown: function(ev) {
-              var k = ev.which || ev.keyCode;
+          $A.on(
+            targ,
+            {
+              touchstart: function(ev) {
+                if (
+                  !odcDel &&
+                  !odc.loaded &&
+                  !onFocusInit &&
+                  !onFocusTraverse &&
+                  !odc.disabled
+                ) {
+                  odcDel = true;
+                  $A.trigger(trigger, "opendatepicker");
+                  ev.preventDefault();
+                  setTimeout(odcDelFn, 1000);
+                }
+              },
+              focus: function(ev) {
+                if (
+                  !odcDel &&
+                  !odc.loaded &&
+                  !onFocusInit &&
+                  !onFocusTraverse &&
+                  !odc.disabled
+                ) {
+                  odcDel = true;
+                  $A.trigger(trigger, "opendatepicker");
+                  $A.announce(odc.openOnFocusHelpText);
+                  setTimeout(odcDelFn, 1000);
+                }
+                onFocusInit = true;
+                onFocusTraverse = false;
+              },
+              blur: function(ev) {
+                if (odc.loaded && onFocusInit && !onFocusTraverse) {
+                  odc.close();
+                }
+                onFocusInit = false;
+              },
+              keydown: function(ev) {
+                var k = ev.which || ev.keyCode;
 
-              if (k === 40 && onFocusInit && !onFocusTraverse && odc.loaded) {
-                onFocusInit = false;
-                onFocusTraverse = true;
-                odc.setFocus(odc.range.index[odc.range.current.mDay - 1]);
-                $A.announce(odc.helpText);
-                ev.preventDefault();
-                ev.stopPropagation();
-              } else if (
-                k === 27 &&
-                onFocusInit &&
-                !onFocusTraverse &&
-                odc.loaded
-              ) {
-                onFocusInit = false;
-                onFocusTraverse = false;
-                odc.close();
-                ev.preventDefault();
-                ev.stopPropagation();
-              } else if (
-                k === 9 &&
-                onFocusInit &&
-                !onFocusTraverse &&
-                odc.loaded
-              ) {
-                onFocusInit = false;
-                onFocusTraverse = false;
-                odc.close();
-                ev.preventDefault();
-                ev.stopPropagation();
+                if (k === 40 && onFocusInit && !onFocusTraverse && odc.loaded) {
+                  onFocusInit = false;
+                  onFocusTraverse = true;
+                  odc.setFocus(odc.range.index[odc.range.current.mDay - 1]);
+                  $A.announce(odc.helpTextShort);
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                } else if (
+                  k === 40 &&
+                  !odc.loaded &&
+                  !odcDel &&
+                  !odc.disabled
+                ) {
+                  odcDel = true;
+                  onFocusInit = true;
+                  onFocusTraverse = false;
+                  $A.trigger(trigger, "opendatepicker");
+                  setTimeout(odcDelFn, 1000);
+                  onFocusInit = false;
+                  onFocusTraverse = true;
+                  odc.setFocus(odc.range.index[odc.range.current.mDay - 1]);
+                  $A.announce(odc.helpTextShort);
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                } else if (
+                  k === 27 &&
+                  onFocusInit &&
+                  !onFocusTraverse &&
+                  odc.loaded
+                ) {
+                  onFocusInit = false;
+                  onFocusTraverse = false;
+                  odc.close();
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                } else if (
+                  k === 9 &&
+                  onFocusInit &&
+                  !onFocusTraverse &&
+                  odc.loaded &&
+                  ev.shiftKey
+                ) {
+                  onFocusInit = false;
+                  onFocusTraverse = false;
+                  odc.close();
+                } else if (
+                  k === 9 &&
+                  onFocusInit &&
+                  !onFocusTraverse &&
+                  odc.loaded &&
+                  !ev.shiftKey
+                ) {
+                  onFocusInit = false;
+                  onFocusTraverse = true;
+                  odc.setFocus(odc.range.index[odc.range.current.mDay - 1]);
+                  $A.announce(odc.helpTextShort);
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                }
               }
-            }
-          });
+            },
+            null,
+            "." + baseId
+          );
         }
 
-        $A.on("body", "click." + baseId, function(ev) {
-          if (mainDC.datepickerLoaded) mainDC.close();
-        });
+        odc.setDisabled(odc, odc.disabled);
+
+        $A.on(
+          "body",
+          "click",
+          function(ev) {
+            if (mainDC.datepickerLoaded) mainDC.close();
+          },
+          null,
+          "." + baseId
+        );
 
         $A(targ).onRemove(function() {
           $A.off(window, "." + baseId);
