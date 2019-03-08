@@ -10,12 +10,15 @@
   display: block;
   font-size: 90%;
 }
+div.insertCalendar {
+    position: relative;
+}
 
 div.calendar {
-  position: fixed;
+  position: absolute;
   z-index: 1;
   right: 0;
-  top: 25%;
+  top: 30%;
   text-align: center;
   color: #fff;
   background: #2e3135;

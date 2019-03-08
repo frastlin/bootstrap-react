@@ -28,7 +28,7 @@ class CalendarMain extends React.Component {
           </p>
         </div>
         <div className="intro tal demo-block">
-          <p>
+          <div class="insertCalendar">
             <DatePicker
               label="Your Birthday:"
               inputId="date"
@@ -85,8 +85,8 @@ class CalendarMain extends React.Component {
                 }
               }}
             />
-          </p>
-          <p>
+          </div>
+          <div class="insertCalendar">
             <DatePicker
               label="Party Date:"
               inputId="party"
@@ -95,7 +95,7 @@ class CalendarMain extends React.Component {
               readOnly="readonly"
               disabled="disabled"
             />
-          </p>
+          </div>
         </div>
         <div className="intro tal keyboard">
           <p>The calendar is keyboard accessible:</p>
