@@ -790,8 +790,8 @@ export function loadAccCalendarModule() {
                 dc.initialDate = initialDate || dc.initialDate || new Date();
                 dc.minDate = minDate || dc.minDate || null;
                 dc.maxDate = maxDate || dc.maxDate || null;
-                dc.date = dc.currentDate;
                 dc.setDateComparisons(dc);
+                dc.date = dc.initialDate;
                 dc.setCurrent(dc);
                 dc.fn.current = {};
                 $A.extend(true, dc.fn.current, dc.range.current);

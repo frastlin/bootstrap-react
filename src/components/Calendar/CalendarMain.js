@@ -3,14 +3,12 @@ import DatePicker from "./DatePicker/DatePicker";
 
 /* Directions for Accessible Date Pickers
 
-1. Import general DatePicker object from "./DatePicker/DatePicker.js".
+1. Import the general DatePicker object from "./DatePicker/DatePicker.js".
 
-2. Include a target edit field for use as a date picker field on the page, and ensure it has a unique ID. Also specify if it is meant to be read-only or not by adding or omitting the readonly attribute.
-
-3. Add a <DatePicker> element declaration directly after the associated input edit field, and make sure that all of the attributes are properly set within that declaration.
-
-
+2. Add a <DatePicker> element declaration, and make sure that all of the required attributes are properly set within that element.
 */
+
+let $A = window.AccDC;
 
 class CalendarMain extends React.Component {
   render() {
@@ -50,10 +48,14 @@ class CalendarMain extends React.Component {
                   // Set focus to the input field to ensure intuitive keyboard accessibility.
                   inputElement.focus();
 
+                  // Now that a new date has been selected, clear the second input field so it can't include a stored value by mistake.
+                  // Gets the input element with id="party"
+                  $A.getElement("party").value = "";
+
                   // Now dynamically set a disabled date range for the second calendar using the newly saved date as the starting point.
 
                   // Get a reference to the second calendar's DC object using the 'triggerId' of that element as the reference within AccDC.
-                  var partyDC = window.AccDC("partyLnk");
+                  var partyDC = $A("partyLnk");
 
                   // Set a new initial Date instance for Calendar2 (Party Date)
                   // Starts with the initial reference to reflect the recently chosen date for Birthday.
