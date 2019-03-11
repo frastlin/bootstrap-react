@@ -54,6 +54,15 @@ class DatePicker extends React.Component {
             $A.query('kbd[data-id="' + props.inputId + '"]')[0],
             "hidden"
           );
+          var outOfBounds = $A.isOutOfViewport(DC.outerNode);
+          if (outOfBounds.bottom) {
+            window.scrollBy({
+              top:
+                (window.innerHeight || document.documentElement.clientHeight) -
+                outOfBounds.bounding.bottom,
+              behavior: "smooth"
+            });
+          }
         },
         runAfterClose: function(DC) {
           // Perform action every time after calendar finishes closing.

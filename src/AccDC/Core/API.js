@@ -1,5 +1,5 @@
 /*
-AccDC 4X BETA - 4.2019.0.1 + React
+AccDC 4X BETA - 4.2019.0.2 + React
 Copyright 2019 Bryan Garaventa (WhatSock.com)
 Part of AccDC, a Cross-Browser JavaScript accessibility API, distributed under the terms of the Open Source Initiative OSI - MIT License
 */
@@ -29,7 +29,7 @@ export function $AccDC() {
   return (
     window.AccDC ||
     (function() {
-      var accDCVersion = "4.2019.0.1",
+      var accDCVersion = "4.2019.0.2",
         $A = function(dc, dcA, dcI, onReady, disableAsync) {
           if (!arguments.length && this === $A) {
             return $A;
@@ -4445,6 +4445,24 @@ https://github.com/whatsock/w3c-alternative-text-computation
             this.currentObject = str;
             return this;
           } else return str;
+        },
+
+        isOutOfViewport: function(elem) {
+          var bounding = elem.getBoundingClientRect();
+          var out = {
+            bounding: bounding
+          };
+          out.top = bounding.top < 0;
+          out.left = bounding.left < 0;
+          out.bottom =
+            bounding.bottom >
+            (window.innerHeight || document.documentElement.clientHeight);
+          out.right =
+            bounding.right >
+            (window.innerWidth || document.documentElement.clientWidth);
+          out.any = out.top || out.left || out.bottom || out.right;
+          out.all = out.top && out.left && out.bottom && out.right;
+          return out;
         },
 
         focus: function(obj) {
