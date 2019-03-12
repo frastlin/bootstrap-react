@@ -4447,6 +4447,8 @@ https://github.com/whatsock/w3c-alternative-text-computation
           } else return str;
         },
 
+        // Derived from isOutOfViewport.js by Chris Ferdinandi
+        // https://vanillajstoolkit.com/helpers/isoutofviewport/
         isOutOfViewport: function(elem) {
           var bounding = elem.getBoundingClientRect();
           var out = {
