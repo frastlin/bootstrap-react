@@ -69,14 +69,11 @@ https://reactjs.org/tutorial/tutorial.html
 Specifically, make sure you have Node.JS installed.
 https://nodejs.org/en/
 
-Next, simply download or clone this project, then do the following to run the code locally.
+Next, simply download or clone this project, and follow the instructions documented within the file: "Help\How to Install.txt".
 
-Within the root folder, you will notice some Batch files. First, double click the bat file InstallDependancies.bat to load the latest versions of the code dependencies that are used by AccDC 4X. You can also CD into the folder within a command prompt and execute this file directly by typing ".\InstallDependancies.bat", which will give you status messages about the installation progress.
-
-Second, just activate the batch file "RunWebServer.bat" by clicking it, or by running the command "npm start" from within the command prompt for the project root directory.
+Finally, just activate the batch file "RunWebServer.bat" by clicking it, or by running the command "npm start" from within the command prompt for the project root directory.
 
 To close the development server, set focus to the NPM window, then press Ctrl+C.
-
 
 Distributed under the terms of the Open Source Initiative OSI - MIT License.
 
