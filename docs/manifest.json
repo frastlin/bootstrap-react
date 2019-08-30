@@ -1,0 +1,8 @@
+{
+  "short_name": "AccDC Bootstrap for React",
+  "name": "AccDC Bootstrap Module Showcase for React",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
