@@ -1,4 +1,5 @@
 {
+  "homepage": "https://whatsock.github.io/bootstrap-react",
   "name": "bootstrap-react",
   "version": "0.1.0",
   "private": true,
@@ -10,7 +11,7 @@
     "es6-promise": "^4.2.4",
     "fetch-ie8": "^1.5.0",
     "jquery": "^3.3.1",
-    "node-fetch": "^2.3.0",
+    "node-fetch": "^2.6.0",
     "prettify": "^0.1.7",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
@@ -23,7 +24,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "rnpm": {
     "assets": [
@@ -31,6 +34,7 @@
     ]
   },
   "devDependencies": {
+    "gh-pages": "^2.1.1",
     "prettier": "^1.12.1"
   }
 }
