@@ -1,0 +1,35 @@
+Additional Programmatic Control
+
+There are some additional methods which allow altering the Date Picker state after invocation:
+
+// First, get a reference to the desired calendar DC object instance
+// The "uniqueId" referenced here is the same value as previously set for the <DatePicker triggerId="uniqueId" />.
+// (See the Markup Syntax file for details.)
+
+var dc = window.AccDC("uniqueId");
+
+// Manually set the calendar to  a specific date after the calendar is rendered.
+dc.setDate(dc, dateObj)
+
+// Manually set the calendar to  a specific date before the calendar is rendered.
+dc.presetDate(dc, initialDateObj, minDateObj, maxDateObj)
+
+// Manage marked dates
+dc.setDayMarked(dc, dateObj, isMarked)
+dc.clearAllMarked(dc)
+
+// Manually disable the calendar plus its associated input and triggering elements.
+// When bool is false or undefined, the calendar will be enabled, otherwise true will disable it.
+dc.setDisabled(dc, bool)
+
+// Controlling disabled dates and date ranges.
+dc.setDayDisabled(dc, dateObj, isDisabled)
+dc.setMonthDisabled(dc, dateObj, isDisabled)
+dc.setDayOfWeekDisabled(dc, dateObj, daysOfWeekArray, isDisabled)
+dc.setWeekdaysDisabled(dc, dateObj, isDisabled)
+dc.setWeekendsDisabled(dc, dateObj, isDisabled)
+dc.clearAllDisabled(dc)
+
+// Set a message for the specified month.
+dc.setMonthMessage(dc, dateObj, message)
+dc.clearAllMessage(dc)
