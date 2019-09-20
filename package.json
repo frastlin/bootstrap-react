@@ -10,7 +10,7 @@
     "debug-js": "^1.0.2",
     "es6-promise": "^4.2.4",
     "fetch-ie8": "^1.5.0",
-    "jquery": "^3.4.1",
+    "jquery": "^3.3.1",
     "node-fetch": "^2.6.0",
     "prettify": "^0.1.7",
     "react": "^16.3.2",
@@ -23,9 +23,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "format-prettier": "prettier --write ./src/**/*.{js,css,json}",
-    "format-html": "js-beautify -r --type='html' ./public/index.html",
-    "format": "npm run format-prettier && npm run format-html",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
