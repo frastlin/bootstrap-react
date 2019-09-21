@@ -1,19 +1,18 @@
 import React, { Component } from 'react';
-import Accordian from './react-wrapped-components/Accordion'
+import AccordionGroup from './react-wrapped-components/AccordionGroup'
+import Accordion  from './react-wrapped-components/Accordion'
+
 
 class App extends Component {
-	constructor(props){
-		super(props)
-	}
-
 	render(){
 		return(
 			<div>
 			<h1>Components</h1>
 			<h2>Accordians</h2>
-			<Accordian group="t1" title="Item1">This is an item 1</Accordian>
-			<Accordian group="t1" defaultOpen={true} title="Item2">This is another item 2</Accordian>
-
+				<AccordionGroup>
+					<Accordion defaultOpen={true} title="Item1">Item1</Accordion>
+					<Accordion title="Item2">This is item2</Accordion>
+				</AccordionGroup>
 			</div>
 		)
 	}
