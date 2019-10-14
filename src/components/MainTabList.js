@@ -25,15 +25,7 @@ import Modal from "./Modal/ModalMain";
 import Popup from "./Popup/PopupMain";
 import Tabs from "./Tabs/TabsMain";
 
-let tabId = "";
-
 class MainTabList extends React.Component {
-  componentWillMount() {
-    var u = window.location.href;
-    var id = u.indexOf("#") !== -1 ? u.slice(u.indexOf("#") + 1) : false;
-    if (!id) id = "main-tab-intro";
-    tabId = id;
-  }
   componentDidMount() {
     strap.setTabList(
       this,
@@ -67,12 +59,12 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-intro"
-            data-defaultopen={tabId === "main-tab-intro" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
             data-insert="pgContent"
             data-controls="Intro"
+            data-defaultopen="true"
           >
             <span>Bootstrap</span>
           </a>
@@ -80,7 +72,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-accordion"
-            data-defaultopen={tabId === "main-tab-accordion" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -93,7 +84,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-banner"
-            data-defaultopen={tabId === "main-tab-banner" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -106,7 +96,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-calendar"
-            data-defaultopen={tabId === "main-tab-calendar" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -119,7 +108,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-carousel"
-            data-defaultopen={tabId === "main-tab-carousel" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -132,7 +120,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-combobox"
-            data-defaultopen={tabId === "main-tab-combobox" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -145,7 +132,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-footnotes"
-            data-defaultopen={tabId === "main-tab-footnotes" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -158,7 +144,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-menu"
-            data-defaultopen={tabId === "main-tab-menu" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -171,7 +156,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-modal"
-            data-defaultopen={tabId === "main-tab-modal" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -184,7 +168,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-popup"
-            data-defaultopen={tabId === "main-tab-popup" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"
@@ -197,7 +180,6 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-tabs"
-            data-defaultopen={tabId === "main-tab-tabs" ? "true" : "false"}
             role="tab"
             href="#tab"
             className="accTab"

@@ -12,8 +12,8 @@ import IntroContent from "./components/Intro/IntroMain";
 $A("#AccDCCurrentVerS1").insert(window.AccDC._version);
 $A("#currentYear").insert(new Date().getFullYear());
 
-$A("#pgContent").mount(<IntroContent />);
 $A("#BootstrapHomeTabList").mount(<MainTabList />);
+$A("#pgContent").mount(<IntroContent />);
 
 $A("#skipLink").on("click", function(ev) {
   $A('ul[role="tablist"].contextual-menu').focus();
