@@ -82,11 +82,12 @@ Distributed under the terms of the Open Source Initiative OSI - MIT License.
 Developed and maintained by: Bryan Garaventa https://www.linkedin.com/in/bgaraventa
 Or on Twitter at https://twitter.com/bryanegaraventa
 
-Includes contributions by:
+Contributors:
 
-* Danny Allen (dannya.com) / Wonderscore Ltd (wonderscore.co.uk) https://www.linkedin.com/in/danny-allen-49690451/
-* Laurence Lewis: https://www.linkedin.com/in/laurence-lewis-77520365/ 
-* All visual design by Angela Ricci (web designer and web front-end developer). You can check her work at her personal site http://gericci.me/ Or you can follow her on Twitter at https://twitter.com/gericci
+* Brandon Keith Biggs (Editor): https://github.com/frastlin
+* Laurence Lewis (Editor): https://www.linkedin.com/in/laurence-lewis-77520365/  
+* Danny Allen (Contributor) (dannya.com) / Wonderscore Ltd (wonderscore.co.uk) https://www.linkedin.com/in/danny-allen-49690451/
+* Visual design by Angela Ricci (web designer and web front-end developer). You can check her work at her personal site http://gericci.me/ Or you can follow her on Twitter at https://twitter.com/gericci
 
 Related projects:
 -----
