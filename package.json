@@ -3,16 +3,15 @@
   "name": "bootstrap-react",
   "version": "0.1.0",
   "private": true,
+  "main": "index.js",
   "dependencies": {
     "bean": "^1.0.15",
     "cheerio": "^1.0.0-rc.2",
     "current-device": "^0.7.9",
-    "debug-js": "^1.0.2",
     "es6-promise": "^4.2.4",
     "fetch-ie8": "^1.5.0",
     "jquery": "^3.4.1",
     "node-fetch": "^2.6.0",
-    "prettify": "^0.1.7",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-html-parser": "^2.0.2",
@@ -23,6 +22,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build-package": "babel src/react-wrapped-components/Accordion --out-dir lib --source-maps --plugins=@babel/plugin-proposal-class-properties --presets=@babel/preset-env,@babel/preset-react",
     "format-prettier": "prettier --write ./src/**/*.{js,css,json}",
     "format-html": "js-beautify -r --type='html' ./public/index.html",
     "format": "npm run format-prettier && npm run format-html",
@@ -37,7 +37,14 @@
     ]
   },
   "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/preset-env": "^7.6.3",
+    "@babel/preset-react": "^7.6.3",
+    "debug-js": "^1.0.2",
     "gh-pages": "^2.1.1",
-    "prettier": "^1.12.1"
+    "prettier": "^1.12.1",
+    "prettify": "^0.1.7"
   }
 }
