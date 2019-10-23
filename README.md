@@ -1,7 +1,7 @@
-# bootstrap-react
+# accdc-react
 BETA release of AccDC 4X + React for building advanced accessible ARIA widgets within the React IDE
 
-Live build for testing: https://whatsock.github.io/bootstrap-react/
+Live build for testing: https://whatsock.github.io/accdc-react/
 
 Accessible Interactive Widgets
 -----
@@ -50,7 +50,7 @@ DC objects can then be chained using DC API methods to perform various dynamic b
 Future Updates
 -----
 
-AccDC 4X is still a work in progress, and includes some experimental features that may be tweaked in the future if bugs are discovered. If you would like to assist with this, please file any issues or recommendations at: https://github.com/whatsock/bootstrap-react
+AccDC 4X is still a work in progress, and includes some experimental features that may be tweaked in the future if bugs are discovered. If you would like to assist with this, please file any issues or recommendations at: https://github.com/whatsock/accdc-react
 
 To be notified of future enhancements to this project, including new accessible widget modules and importable accessible components, simply star this project.
 

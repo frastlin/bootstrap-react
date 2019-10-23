@@ -1,6 +1,6 @@
 {
-  "homepage": "https://whatsock.github.io/bootstrap-react",
-  "name": "bootstrap-react",
+  "homepage": "https://whatsock.github.io/accdc-react",
+  "name": "accdc-react",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

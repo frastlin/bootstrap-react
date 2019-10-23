@@ -6,7 +6,7 @@ class IntroMain extends React.Component {
       <div id="pg-intro">
         <div className="intro highlight">
           <p>
-            AccDC Bootstrap is an HTML parser that renders advanced, accessible
+            AccDC for React is an HTML parser that renders advanced, accessible
             interactive controls using semantic HTML markup.
           </p>
         </div>
@@ -64,12 +64,12 @@ class IntroMain extends React.Component {
         </div>
         <div className="hd">
           <h3>
-            <span>Why is AccDC Bootstrap different?</span>
+            <span>Why is AccDC for React different?</span>
           </h3>
         </div>
         <div className="intro tal">
           <p>
-            AccDC Bootstrap is module based, so it can be extended or reduced as
+            AccDC for React is module based, so it can be extended or reduced as
             needed for any site-wide implementation.
           </p>
           <p>
@@ -79,7 +79,7 @@ class IntroMain extends React.Component {
             and accessibility.
           </p>
           <p>
-            The bootstrap module itself is also fully configurable, so that new
+            All bootstrapped modules are also fully configurable, so that new
             features and components can easily be added and customized for
             global integration.
           </p>
@@ -90,7 +90,7 @@ class IntroMain extends React.Component {
             <li>Voiceover using iOS Safari.</li>
           </ol>
           <p>
-            AccDC Bootstrap is designed to automatically enforce accessibility,
+            AccDC for React is designed to automatically enforce accessibility,
             while making it possible to populate individual components with any
             type of content, in any language, using any visual styling.
           </p>
@@ -177,6 +177,23 @@ class IntroMain extends React.Component {
               <a
                 target="custom"
                 href="https://github.com/whatsock/accdc-mootools/archive/master.zip"
+              >
+                Zip
+              </a>{" "}
+              ]
+            </li>
+            <li>
+              <strong>The AccDC API (for React)</strong>[{" "}
+              <a
+                target="custom"
+                href="https://github.com/whatsock/accdc-react"
+              >
+                GitHub
+              </a>{" "}
+              |
+              <a
+                target="custom"
+                href="https://github.com/whatsock/accdc-react/archive/master.zip"
               >
                 Zip
               </a>{" "}
