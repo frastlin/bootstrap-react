@@ -47,7 +47,16 @@ class TabsMain extends React.Component {
       }
     );
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Tabs");
     return (
       <div id="pg-tabs">
         <div className="hd">

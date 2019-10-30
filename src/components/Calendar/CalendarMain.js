@@ -11,7 +11,16 @@ import DatePicker from "./DatePicker/DatePicker";
 let $A = window.AccDC;
 
 class CalendarMain extends React.Component {
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Calendar");
     return (
       <div id="pg-calendar">
         <div className="hd">

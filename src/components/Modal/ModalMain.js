@@ -87,7 +87,16 @@ class ModalMain extends React.Component {
       $A("GlobalTimeoutDialog").mount();
     }, 3000);
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Modal");
     return (
       <div id="pg-modal">
         <div className="hd">

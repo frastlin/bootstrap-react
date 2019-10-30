@@ -59,7 +59,16 @@ class MenusMain extends React.Component {
       }
     );
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Menu");
     return (
       <div id="pg-menus">
         <div className="hd">

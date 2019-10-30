@@ -34,7 +34,16 @@ class PopupMain extends React.Component {
       }
     );
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Popup");
     return (
       <div id="pg-popup">
         <div className="hd">

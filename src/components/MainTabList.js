@@ -53,18 +53,40 @@ class MainTabList extends React.Component {
       }
     );
   }
+  isDefaultOpen(id) {
+    id = "main-tab-" + id.toLowerCase();
+    var tabList = [
+      "main-tab-intro",
+      "main-tab-accordion",
+      "main-tab-banner",
+      "main-tab-calendar",
+      "main-tab-carousel",
+      "main-tab-combobox",
+      "main-tab-footnotes",
+      "main-tab-menu",
+      "main-tab-modal",
+      "main-tab-popup",
+      "main-tab-tabs"
+    ];
+    var refId = window.location.href.split("#")[1] || false;
+    return ((!refId || tabList.indexOf(refId) === -1) &&
+      id === "main-tab-intro") ||
+      (refId && tabList.indexOf(refId) !== -1 && refId === id)
+      ? "true"
+      : "false";
+  }
   render() {
     return (
       <ul role="tablist" aria-level="1" className="contextual-menu">
         <li role="presentation">
           <a
             id="main-tab-intro"
+            data-defaultopen={this.isDefaultOpen("Intro")}
             role="tab"
             href="#tab"
             className="accTab"
             data-insert="pgContent"
             data-controls="Intro"
-            data-defaultopen="true"
           >
             <span>Bootstrap</span>
           </a>
@@ -72,6 +94,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-accordion"
+            data-defaultopen={this.isDefaultOpen("Accordion")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -84,6 +107,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-banner"
+            data-defaultopen={this.isDefaultOpen("Banner")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -96,6 +120,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-calendar"
+            data-defaultopen={this.isDefaultOpen("Calendar")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -108,6 +133,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-carousel"
+            data-defaultopen={this.isDefaultOpen("Carousel")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -120,6 +146,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-combobox"
+            data-defaultopen={this.isDefaultOpen("Combobox")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -132,6 +159,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-footnotes"
+            data-defaultopen={this.isDefaultOpen("Footnotes")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -144,6 +172,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-menu"
+            data-defaultopen={this.isDefaultOpen("Menu")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -156,6 +185,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-modal"
+            data-defaultopen={this.isDefaultOpen("Modal")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -168,6 +198,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-popup"
+            data-defaultopen={this.isDefaultOpen("Popup")}
             role="tab"
             href="#tab"
             className="accTab"
@@ -180,6 +211,7 @@ class MainTabList extends React.Component {
         <li role="presentation">
           <a
             id="main-tab-tabs"
+            data-defaultopen={this.isDefaultOpen("Tabs")}
             role="tab"
             href="#tab"
             className="accTab"

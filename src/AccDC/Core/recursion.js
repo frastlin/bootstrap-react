@@ -1,4 +1,4 @@
-window.getAccNameVersion = "2.34";
+window.getAccNameVersion = "2.35";
 
 /*!
 CalcNames: The AccName Computation Prototype, compute the Name and Description property values for a DOM node
@@ -512,19 +512,21 @@ Plus roles extended for the Role Parity project.
               }
 
               // Process native HTML optgroup tags to use label as name when not explicitly set using aria-labelledby or aria-label.
-              if (
-                !skipTo.tag &&
-                !skipTo.role &&
-                !hasName &&
-                !rolePresentation &&
-                nTag === "optgroup" &&
-                node.getAttribute("label")
-              ) {
-                // Check for blank value, since whitespace chars alone are not valid as a name
-                name = trim(node.getAttribute("label"));
-                if (trim(name)) {
-                  hasName = true;
+              if (nTag === "optgroup") {
+                if (
+                  !skipTo.tag &&
+                  !skipTo.role &&
+                  !hasName &&
+                  !rolePresentation &&
+                  node.getAttribute("label")
+                ) {
+                  // Check for blank value, since whitespace chars alone are not valid as a name
+                  name = trim(node.getAttribute("label"));
+                  if (trim(name)) {
+                    hasName = true;
+                  }
                 }
+                result.skip = true;
               }
 
               // Process the accessible names for native HTML buttons
@@ -869,7 +871,7 @@ Plus roles extended for the Role Parity project.
       return e;
     };
 
-    var lastChild = function(e, t) {
+    var lastChild = function(e, t, r, s) {
       var e = e ? e.lastChild : null;
       while (e) {
         var tr = getRole(e) || false;
@@ -1391,20 +1393,16 @@ Plus roles extended for the Role Parity project.
         if (
           (node && node.nodeType !== 1) ||
           node === refNode ||
-          ["input", "select", "textarea", "img", "iframe"].indexOf(
+          ["input", "select", "textarea", "img", "iframe", "optgroup"].indexOf(
             node.nodeName.toLowerCase()
           ) !== -1
         ) {
           return { before: "", after: "" };
         }
-        if (docO.defaultView && docO.defaultView.getComputedStyle) {
-          return {
-            before: cleanCSSText(node, getText(node, ":before")),
-            after: cleanCSSText(node, getText(node, ":after"))
-          };
-        } else {
-          return { before: "", after: "" };
-        }
+        return {
+          before: cleanCSSText(node, getText(node, ":before")),
+          after: cleanCSSText(node, getText(node, ":after"))
+        };
       };
 
     var getParent = function(node, nTag, nRole, noRole) {

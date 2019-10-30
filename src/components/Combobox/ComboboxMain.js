@@ -11,7 +11,16 @@ class ComboboxMain extends React.Component {
     ev.stopPropagation();
     ev.preventDefault();
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Combobox");
     return (
       <div id="pg-combobox">
         <div className="hd">

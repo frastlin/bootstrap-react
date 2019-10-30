@@ -25,7 +25,16 @@ backText: 'Back to Footnote'
 */
     });
   }
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Footnotes");
     return (
       <div id="pg-fn">
         <div className="hd">

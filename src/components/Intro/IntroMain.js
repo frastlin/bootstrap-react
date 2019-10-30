@@ -1,7 +1,16 @@
 import React from "react";
 
 class IntroMain extends React.Component {
+  changeURL(id) {
+    document.title = id;
+    window.history.pushState(
+      { html: document.html, pageTitle: id },
+      "",
+      "./#main-tab-" + id.toLowerCase()
+    );
+  }
   render() {
+    this.changeURL("Intro");
     return (
       <div id="pg-intro">
         <div className="intro highlight">
@@ -184,10 +193,7 @@ class IntroMain extends React.Component {
             </li>
             <li>
               <strong>The AccDC API (for React)</strong>[{" "}
-              <a
-                target="custom"
-                href="https://github.com/whatsock/accdc-react"
-              >
+              <a target="custom" href="https://github.com/whatsock/accdc-react">
                 GitHub
               </a>{" "}
               |
