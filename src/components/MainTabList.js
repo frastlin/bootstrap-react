@@ -25,55 +25,39 @@ import Modal from "./Modal/ModalMain";
 import Popup from "./Popup/PopupMain";
 import Tabs from "./Tabs/TabsMain";
 
+var tabList = {
+  Intro: <Intro />,
+  Accordion: <Accordion />,
+  Banner: <Banner />,
+  Calendar: <Calendar />,
+  Carousel: <Carousel />,
+  Combobox: <Combobox />,
+  Footnotes: <Footnotes />,
+  Menus: <Menus />,
+  Modal: <Modal />,
+  Popup: <Popup />,
+  Tabs: <Tabs />
+};
+
+var refId = window.location.href.split("#main-tab-")[1] || "intro";
+refId = refId.charAt(0).toUpperCase() + refId.slice(1);
+if (!tabList[refId]) refId = "Intro";
+window.$A("#pgContent").mount(tabList[refId]);
+
 class MainTabList extends React.Component {
   componentDidMount() {
-    strap.setTabList(
-      this,
-      {
-        Intro: <Intro />,
-        Accordion: <Accordion />,
-        Banner: <Banner />,
-        Calendar: <Calendar />,
-        Carousel: <Carousel />,
-        Combobox: <Combobox />,
-        Footnotes: <Footnotes />,
-        Menus: <Menus />,
-        Modal: <Modal />,
-        Popup: <Popup />,
-        Tabs: <Tabs />
-      },
-      {
-        // callback: function(DC, isOpen) {
-        // if (isOpen) window.AccDC.beep();
-        // },
+    strap.setTabList(this, tabList, {
+      // callback: function(DC, isOpen) {
+      // if (isOpen) window.AccDC.beep();
+      // },
 
-        overrides: {
-          toggleClassName: "active"
-        }
+      overrides: {
+        toggleClassName: "active"
       }
-    );
+    });
   }
   isDefaultOpen(id) {
-    id = "main-tab-" + id.toLowerCase();
-    var tabList = [
-      "main-tab-intro",
-      "main-tab-accordion",
-      "main-tab-banner",
-      "main-tab-calendar",
-      "main-tab-carousel",
-      "main-tab-combobox",
-      "main-tab-footnotes",
-      "main-tab-menu",
-      "main-tab-modal",
-      "main-tab-popup",
-      "main-tab-tabs"
-    ];
-    var refId = window.location.href.split("#")[1] || false;
-    return ((!refId || tabList.indexOf(refId) === -1) &&
-      id === "main-tab-intro") ||
-      (refId && tabList.indexOf(refId) !== -1 && refId === id)
-      ? "true"
-      : "false";
+    return tabList[refId] && refId === id ? "true" : "false";
   }
   render() {
     return (

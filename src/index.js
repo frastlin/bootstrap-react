@@ -7,13 +7,9 @@ import "./VisualARIA/Load";
 import "./css/global.css";
 import MainTabList from "./components/MainTabList";
 
-import IntroContent from "./components/Intro/IntroMain";
-
 $A("#AccDCCurrentVerS1").insert(window.AccDC._version);
-$A("#currentYear").insert(new Date().getFullYear());
-
 $A("#BootstrapHomeTabList").mount(<MainTabList />);
-$A("#pgContent").mount(<IntroContent />);
+$A("#currentYear").insert(new Date().getFullYear());
 
 $A("#skipLink").on("click", function(ev) {
   $A('ul[role="tablist"].contextual-menu').focus();
