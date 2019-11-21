@@ -1,12 +1,4 @@
-var AccNameNameSpace = window.AccNamePrototypeNameSpace;
-(function(nameSpace) {
-  if (nameSpace && typeof nameSpace === "string" && nameSpace.length) {
-    window[nameSpace] = {};
-    nameSpace = window[nameSpace];
-  }
-  nameSpace.getAccNameVersion = "2.37";
-
-  /*!
+/*!
 CalcNames: The AccName Computation Prototype, compute the Name and Description property values for a DOM node
 Returns an object with 'name' and 'desc' properties.
 Functionality mirrors the steps within the W3C Accessible Name and Description computation algorithm.
@@ -16,6 +8,13 @@ https://github.com/whatsock/w3c-alternative-text-computation
 Distributed under the terms of the Open Source Initiative OSI - MIT License
 */
 
+(function() {
+  var nameSpace = window.AccNamePrototypeNameSpace || window;
+  if (nameSpace && typeof nameSpace === "string" && nameSpace.length) {
+    window[nameSpace] = {};
+    nameSpace = window[nameSpace];
+  }
+  nameSpace.getAccNameVersion = "2.39";
   // AccName Computation Prototype
   nameSpace.getAccName = nameSpace.calcNames = function(
     node,
@@ -200,15 +199,40 @@ Plus roles extended for the Role Parity project.
           res.name += fResult.owns || "";
           if (
             rootNode === currentNode &&
+            refNode === currentNode &&
             !trim(res.name) &&
             trim(fResult.title)
           ) {
             res.name = addSpacing(fResult.title);
-          } else if (rootNode === currentNode && trim(fResult.title)) {
+          } else if (
+            rootNode === currentNode &&
+            refNode === currentNode &&
+            trim(fResult.title)
+          ) {
             res.title = addSpacing(fResult.title);
           }
-          if (rootNode === currentNode && trim(fResult.desc)) {
+          if (
+            rootNode === currentNode &&
+            refNode === currentNode &&
+            trim(fResult.desc)
+          ) {
             res.title = addSpacing(fResult.desc);
+          }
+          if (
+            rootNode === currentNode &&
+            refNode === currentNode &&
+            trim(fResult.placeholder) &&
+            !trim(res.name)
+          ) {
+            res.name = addSpacing(fResult.placeholder);
+            nameFromPlaceholder = true;
+          } else if (
+            rootNode === currentNode &&
+            refNode === currentNode &&
+            trim(fResult.placeholder) &&
+            !trim(res.title)
+          ) {
+            res.title = addSpacing(fResult.placeholder);
           }
           if (nodeIsBlock || fResult.isWidget) {
             res.name = addSpacing(res.name);
@@ -774,9 +798,8 @@ Plus roles extended for the Role Parity project.
               var placeholder =
                 !skipTo.tag &&
                 !skipTo.role &&
-                !hasName &&
-                !isSeparatChildFormField &&
                 node === rootNode &&
+                node === refNode &&
                 (isEditWidgetRole ||
                   (isNativeFormField &&
                     (nTag === "textarea" ||
@@ -795,13 +818,7 @@ Plus roles extended for the Role Parity project.
                 );
 
               if (placeholder) {
-                if (!nTitle) {
-                  name = placeholder;
-                  nameFromPlaceholder = true;
-                } else if (!hasDesc) result.desc = placeholder;
-                if (trim(name)) {
-                  hasName = true;
-                }
+                result.placeholder = placeholder;
               }
 
               var isSkipTo =
@@ -824,7 +841,11 @@ Plus roles extended for the Role Parity project.
 
               // Check for non-empty value of aria-owns, follow each ID ref, then process with same naming computation.
               // Also abort aria-owns processing if contained on an element that does not support child elements.
-              if (!isSkipTo && aOwns && !isNativeFormField && nTag !== "img") {
+              if (
+                !isSkipTo &&
+                aOwns &&
+                ["input", "img", "progress"].indexOf(nTag) === -1
+              ) {
                 ids = aOwns.split(/\s+/);
                 parts = [];
                 for (i = 0; i < ids.length; i++) {
@@ -886,8 +907,8 @@ Plus roles extended for the Role Parity project.
           if (
             e.nodeType === 1 &&
             ((!t && !r) ||
-              ((tr && r && r.indexOf(tr) !== -1) ||
-                (!tr && t && t.indexOf(e.nodeName.toLowerCase()) !== -1)))
+              (tr && r && r.indexOf(tr) !== -1) ||
+              (!tr && t && t.indexOf(e.nodeName.toLowerCase()) !== -1))
           ) {
             return e;
           } else if (!s && e.nodeType === 1 && (t || r)) {
@@ -905,8 +926,8 @@ Plus roles extended for the Role Parity project.
           if (
             e.nodeType === 1 &&
             ((!t && !r) ||
-              ((tr && r && r.indexOf(tr) !== -1) ||
-                (!tr && t && t.indexOf(e.nodeName.toLowerCase()) !== -1)))
+              (tr && r && r.indexOf(tr) !== -1) ||
+              (!tr && t && t.indexOf(e.nodeName.toLowerCase()) !== -1))
           ) {
             return e;
           } else if (!s && e.nodeType === 1 && (t || r)) {
@@ -1575,4 +1596,4 @@ Plus roles extended for the Role Parity project.
       calcNames: nameSpace.calcNames
     };
   }
-})(AccNameNameSpace || window);
+})();
