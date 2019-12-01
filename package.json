@@ -2,8 +2,18 @@
   "homepage": "https://whatsock.github.io/bootstrap-react",
   "name": "bootstrap-react",
   "version": "0.1.0",
-  "private": true,
-  "main": "index.js",
+  "private": false,
+  "main": "lib/packageIndex.js",
+  "module": "lib/packageIndex.js",
+  "babel": {
+  "presets": ["@babel/react"],
+  "plugins": ["@babel/plugin-proposal-class-properties"],
+  "only": [
+    "src/AccDC",
+    "src/react-wrapped-components",
+    "src/packageIndex.js"
+    ]
+  },
   "dependencies": {
     "bean": "^1.0.15",
     "cheerio": "^1.0.0-rc.2",
@@ -12,17 +22,19 @@
     "fetch-ie8": "^1.5.0",
     "jquery": "^3.4.1",
     "node-fetch": "^2.6.0",
-    "react": "^16.3.2",
-    "react-dom": "^16.3.2",
     "react-html-parser": "^2.0.2",
     "react-native-cheerio": "^1.0.0-rc.4",
-    "react-scripts": "1.1.4",
     "zenscroll": "^4.0.2"
+  },
+  "peerDependencies": {
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-scripts": "1.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-package": "babel src/react-wrapped-components/Accordion --out-dir lib --source-maps --plugins=@babel/plugin-proposal-class-properties --presets=@babel/preset-env,@babel/preset-react",
+    "build-package": "SET NODE_ENV=production && if exist lib rmdir /s /q lib && mkdir lib && npx babel src --out-dir lib --source-maps",
     "format-prettier": "prettier --write ./src/**/*.{js,css,json}",
     "format-html": "js-beautify -r --type='html' ./public/index.html",
     "format": "npm run format-prettier && npm run format-html",
@@ -45,6 +57,9 @@
     "debug-js": "^1.0.2",
     "gh-pages": "^2.1.1",
     "prettier": "^1.12.1",
-    "prettify": "^0.1.7"
+    "prettify": "^0.1.7",
+    "react-scripts": "1.1.4",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2"
   }
 }
