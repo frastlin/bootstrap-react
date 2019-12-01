@@ -6,12 +6,16 @@
   "main": "lib/packageIndex.js",
   "module": "lib/packageIndex.js",
   "babel": {
-  "presets": ["@babel/react"],
-  "plugins": ["@babel/plugin-proposal-class-properties"],
-  "only": [
-    "src/AccDC",
-    "src/react-wrapped-components",
-    "src/packageIndex.js"
+    "presets": [
+      "@babel/react"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ],
+    "only": [
+      "src/AccDC",
+      "src/react-wrapped-components",
+      "src/packageIndex.js"
     ]
   },
   "dependencies": {
@@ -34,7 +38,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build-package": "SET NODE_ENV=production && if exist lib rmdir /s /q lib && mkdir lib && npx babel src --out-dir lib --source-maps",
+    "build-package": "npm run set-production && shx rm -rf lib && shx mkdir lib && npx babel src --out-dir lib --source-maps",
+    "set-production": "cross-env-shell node_env=production",
     "format-prettier": "prettier --write ./src/**/*.{js,css,json}",
     "format-html": "js-beautify -r --type='html' ./public/index.html",
     "format": "npm run format-prettier && npm run format-html",
@@ -54,12 +59,14 @@
     "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@babel/preset-env": "^7.6.3",
     "@babel/preset-react": "^7.6.3",
+    "cross-env": "^6.0.3",
     "debug-js": "^1.0.2",
     "gh-pages": "^2.1.1",
     "prettier": "^1.12.1",
     "prettify": "^0.1.7",
-    "react-scripts": "1.1.4",
     "react": "^16.3.2",
-    "react-dom": "^16.3.2"
+    "react-dom": "^16.3.2",
+    "react-scripts": "1.1.4",
+    "shx": "^0.3.2"
   }
 }
