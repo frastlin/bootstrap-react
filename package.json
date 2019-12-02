@@ -14,7 +14,7 @@
     "node-fetch": "^2.6.0",
     "prettify": "^0.1.7",
     "react": "^16.3.2",
-    "react-dom": "^16.3.2",
+    "react-dom": "^16.3.3",
     "react-html-parser": "^2.0.2",
     "react-native-cheerio": "^1.0.0-rc.4",
     "react-scripts": "1.1.4",
